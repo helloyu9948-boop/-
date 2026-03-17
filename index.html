@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -22,7 +21,6 @@
   .hero p { font-size: 14px; color: var(--text3); letter-spacing: 0.06em; }
   .key-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 2rem; cursor: pointer; width: fit-content; }
   .key-toggle-label { font-size: 12px; color: var(--text3); letter-spacing: 0.06em; }
-  .key-toggle-label:hover { color: var(--text2); }
   .key-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.2s; }
   .key-dot.saved { background: var(--accent); }
   .key-panel { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: none; }
@@ -172,10 +170,6 @@
   let knowledgeBase = localStorage.getItem('kb') || '';
   let apiKey = localStorage.getItem('api_key') || '';
 
-  // 豆包接口配置
-  const DOUBAO_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
-  const DOUBAO_MODEL = 'doubao-1-5-pro-32k';
-
   function updateKeyStatus() {
     const dot = document.getElementById('key-dot');
     const label = document.getElementById('key-toggle-label');
@@ -188,9 +182,7 @@
     }
   }
 
-  function toggleKey() {
-    document.getElementById('key-panel').classList.toggle('open');
-  }
+  function toggleKey() { document.getElementById('key-panel').classList.toggle('open'); }
 
   if (apiKey) document.getElementById('api-key').value = apiKey;
   updateKeyStatus();
@@ -257,12 +249,9 @@
     return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：${s.kcal}kcal/日，蛋白质${s.protein}g以上，低碳高蛋白。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
   }
 
-  // 豆包用 OpenAI 兼容格式：
-  // - URL 换成火山引擎地址
-  // - headers 用 Authorization: Bearer
-  // - system 作为 messages 数组第一条
-  // - 回复在 data.choices[0].message.content 里
-  async function callClaude(sys, msg, targetEl, btnEl) {
+  // 现在不直接调豆包，而是调自己 Vercel 上的 /api/chat
+  // /api/chat 跑在服务器端，没有 CORS 限制，它再去调豆包
+  async function callAI(sys, msg, targetEl, btnEl) {
     if (!apiKey) {
       document.getElementById('key-panel').classList.add('open');
       targetEl.innerHTML = '<div class="ai-block error">先配置豆包 API Key。</div>';
@@ -271,25 +260,18 @@
     btnEl.disabled = true;
     targetEl.innerHTML = '<div class="ai-block loading">分析中…</div>';
     try {
-      const res = await fetch(DOUBAO_URL, {
+      const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: DOUBAO_MODEL,
-          max_tokens: 1000,
-          messages: [
-            { role: 'system', content: sys },
-            { role: 'user', content: msg }
-          ]
+          system: sys,
+          messages: [{ role: 'user', content: msg }],
+          apiKey: apiKey
         })
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.choices?.[0]?.message?.content || '没有拿到回复。';
-      targetEl.innerHTML = '<div class="ai-block">' + text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</div>';
+      if (data.error) throw new Error(data.error);
+      targetEl.innerHTML = '<div class="ai-block">' + data.text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</div>';
     } catch(e) {
       targetEl.innerHTML = '<div class="ai-block error">请求失败：' + e.message + '</div>';
     } finally { btnEl.disabled = false; }
@@ -297,7 +279,7 @@
 
   function generateMenu() {
     const s = getStats();
-    callClaude(
+    callAI(
       buildSystem(`\n\n任务：生成今日完整减脂菜单。总热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质克数，结尾合计。有知识库则结尾说明参考了哪条原则。`),
       '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的。',
       document.getElementById('menu-reply'), document.getElementById('btn-menu')
@@ -308,7 +290,7 @@
     const food = document.getElementById('food-input').value.trim();
     if (!food) { alert('先写今天吃了什么'); return; }
     const s = getStats();
-    callClaude(
+    callAI(
       buildSystem(`\n\n任务：分析用户今天的饮食。1.粗估总热量和蛋白质，与目标（${s.kcal}kcal / 蛋白质${s.protein}g）对比写出缺口或超出量。2.指出最主要1-2个问题。3.给今天剩余时间的具体补救方案或明天调整建议（越具体越好）。有知识库则补救优先参考知识库原则。不评判，只给方案。`),
       '我今天吃了：' + food,
       document.getElementById('log-reply'), document.getElementById('btn-log')
