@@ -1,68 +1,114 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>减脂AI顾问</title>
+<title>今天吃了么</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0e0e0e; --bg2: #161616; --bg3: #1f1f1f;
-    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-    --text: #f0f0f0; --text2: #888; --text3: #555;
-    --radius: 10px; --radius-sm: 6px;
+    --bg: #0a0a0a; --bg2: #111; --bg3: #1a1a1a; --bg4: #222;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.15);
+    --text: #efefef; --text2: #777; --text3: #444;
+    --accent: #d4f57a; --radius: 14px; --radius-sm: 8px;
   }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; font-size: 15px; line-height: 1.6; }
-  .app { max-width: 640px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-  h1 { font-size: 18px; font-weight: 500; margin-bottom: 0.2rem; }
-  .sub { font-size: 13px; color: var(--text2); margin-bottom: 2rem; }
-  .label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
-  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1.75rem; }
-  .tab { padding: 8px 18px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); border-bottom: 2px solid transparent; font-family: inherit; }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+  html { background: var(--bg); color: var(--text); font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; font-size: 15px; line-height: 1.6; }
+  body { min-height: 100vh; }
+  .app { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+
+  .hero { margin-bottom: 3rem; }
+  .hero h1 { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 6px; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { font-size: 14px; color: var(--text3); letter-spacing: 0.06em; }
+
+  .key-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 2rem; cursor: pointer; width: fit-content; }
+  .key-toggle-label { font-size: 12px; color: var(--text3); letter-spacing: 0.06em; }
+  .key-toggle-label:hover { color: var(--text2); }
+  .key-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.2s; }
+  .key-dot.saved { background: var(--accent); }
+
+  .key-panel { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: none; }
+  .key-panel.open { display: block; }
+  .key-inner-label { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .key-row { display: flex; gap: 8px; }
+  .key-row input { flex: 1; padding: 10px 14px; font-size: 13px; font-family: inherit; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); }
+  .key-row input:focus { outline: none; border-color: var(--accent); }
+  .key-row input::placeholder { color: var(--text3); }
+  .key-hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+
+  .tabs { display: flex; gap: 4px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 5px; margin-bottom: 1.75rem; }
+  .tab { flex: 1; padding: 9px 0; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); border-radius: 10px; font-family: inherit; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--bg4); color: var(--text); font-weight: 500; }
+
   .section { display: none; }
   .section.active { display: block; }
-  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
-  .stat { background: var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; }
-  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
-  .stat-val { font-size: 20px; font-weight: 500; }
-  .stat-unit { font-size: 11px; color: var(--text2); }
-  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-  .menu-item { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; gap: 12px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .stat-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+  .stat-input { font-size: 28px; font-weight: 600; background: none; border: none; color: var(--text); width: 100%; font-family: inherit; padding: 0; letter-spacing: -0.02em; }
+  .stat-input:focus { outline: none; color: var(--accent); }
+  .stat-unit { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+  .card-label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+
+  .menu-item { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; gap: 16px; }
   .menu-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .menu-item.total { font-weight: 500; padding-top: 14px; }
+  .menu-name { color: var(--text); flex: 1; }
   .menu-kcal { color: var(--text2); font-size: 13px; white-space: nowrap; flex-shrink: 0; }
-  textarea { width: 100%; resize: vertical; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); line-height: 1.7; min-height: 100px; }
+  .menu-item.total .menu-kcal { color: var(--accent); font-size: 14px; }
+
+  textarea { width: 100%; resize: vertical; padding: 12px 14px; font-size: 14px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); line-height: 1.7; min-height: 110px; }
   textarea:focus { outline: none; border-color: var(--border2); }
   textarea::placeholder { color: var(--text3); }
-  .hint { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
-  button.primary { display: inline-flex; align-items: center; gap: 6px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); padding: 9px 18px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500; }
+  .hint { font-size: 12px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
+
+  .btn-row { display: flex; align-items: center; gap: 12px; }
+  button.primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #0a0a0a; border: none; border-radius: var(--radius-sm); padding: 11px 22px; font-size: 14px; cursor: pointer; font-family: inherit; font-weight: 600; transition: opacity 0.15s; }
   button.primary:hover { opacity: 0.88; }
   button.primary:disabled { opacity: 0.3; cursor: not-allowed; }
-  .ai-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-top: 1rem; font-size: 14px; line-height: 1.85; color: var(--text); white-space: pre-wrap; }
-  .ai-block.loading { color: var(--text3); }
-  .ai-block.error { color: #e05c5c; }
-  .api-row { display: flex; gap: 8px; align-items: center; margin-bottom: 1.5rem; }
-  .api-row input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); }
-  .api-row input:focus { outline: none; border-color: var(--border2); }
-  .api-row input::placeholder { color: var(--text3); }
-  .api-saved { font-size: 12px; color: #6bcb77; margin-left: 4px; display: none; }
-  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 99px; background: rgba(255,255,255,0.07); color: var(--text2); margin-left: 8px; }
-  @media (max-width: 480px) { .app { padding: 1.25rem 1rem 3rem; } }
+  button.secondary { display: inline-flex; align-items: center; background: none; color: var(--text2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 18px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  button.secondary:hover { color: var(--text); border-color: var(--text3); }
+
+  .ai-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-top: 1.25rem; font-size: 14px; line-height: 1.9; color: var(--text); white-space: pre-wrap; }
+  .ai-block.loading { color: var(--text3); font-style: italic; }
+  .ai-block.error { color: #e05c5c; border-color: rgba(224,92,92,0.2); }
+
+  .kb-meta { font-size: 12px; color: var(--text3); margin-top: 8px; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; background: rgba(212,245,122,0.1); color: var(--accent); margin-left: 8px; border: 0.5px solid rgba(212,245,122,0.2); }
+
+  @media (max-width: 500px) {
+    .app { padding: 2rem 1rem 5rem; }
+    .hero h1 { font-size: 28px; }
+    .stat-input { font-size: 22px; }
+    .stat-grid { gap: 8px; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
-  <h1>减脂 AI 顾问</h1>
-  <p class="sub">98kg · 三亚 · 断糖减脂中</p>
 
-  <div style="margin-bottom:1.5rem;">
-    <div class="label">Anthropic API Key</div>
-    <div class="api-row">
+  <div class="hero">
+    <h1>今天吃了么<span>.</span></h1>
+    <p>今天瘦了么</p>
+  </div>
+
+  <div class="key-toggle" onclick="toggleKey()">
+    <div class="key-dot" id="key-dot"></div>
+    <span class="key-toggle-label" id="key-toggle-label">API Key 未设置 — 点击配置</span>
+  </div>
+
+  <div class="key-panel" id="key-panel">
+    <div class="key-inner-label">Anthropic API Key</div>
+    <div class="key-row">
       <input type="password" id="api-key" placeholder="sk-ant-..." />
-      <button class="primary" onclick="saveKey()">保存</button>
-      <span class="api-saved" id="key-saved">✓ 已保存</span>
+      <button class="primary" onclick="saveKey()" style="padding:10px 18px;font-size:13px;">保存</button>
     </div>
-    <div class="hint">Key 只存在本地浏览器，不会上传任何地方。没有 Key 去 console.anthropic.com 免费申请。</div>
+    <div class="key-hint">Key 只存在本地浏览器，不会上传任何地方。没有 Key 去 console.anthropic.com 申请。</div>
   </div>
 
   <div class="tabs">
@@ -73,51 +119,102 @@
 
   <div id="tab-menu" class="section active">
     <div class="stat-grid">
-      <div class="stat"><div class="stat-label">目标热量</div><div class="stat-val">1800<span class="stat-unit"> kcal</span></div></div>
-      <div class="stat"><div class="stat-label">蛋白质目标</div><div class="stat-val">160<span class="stat-unit"> g</span></div></div>
-      <div class="stat"><div class="stat-label">体重</div><div class="stat-val">98<span class="stat-unit"> kg</span></div></div>
-    </div>
-    <div class="card">
-      <div class="label">今日推荐菜单</div>
-      <div id="menu-content">
-        <div class="menu-item"><span>早餐：鸡蛋3个 + 全麦面包1片</span><span class="menu-kcal">约 380 kcal</span></div>
-        <div class="menu-item"><span>午餐：鸡胸肉200g + 糙米100g + 西兰花</span><span class="menu-kcal">约 520 kcal</span></div>
-        <div class="menu-item"><span>加餐：希腊酸奶 + 蓝莓</span><span class="menu-kcal">约 180 kcal</span></div>
-        <div class="menu-item"><span>晚餐：三文鱼150g + 蔬菜沙拉</span><span class="menu-kcal">约 420 kcal</span></div>
-        <div class="menu-item" style="font-weight:500;"><span>合计</span><span class="menu-kcal" style="color:var(--text)">1500 kcal · 蛋白质约 155g</span></div>
+      <div class="stat">
+        <div class="stat-label">目标热量</div>
+        <input class="stat-input" id="s-kcal" type="number" value="1800" />
+        <div class="stat-unit">kcal / 日</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">蛋白质</div>
+        <input class="stat-input" id="s-protein" type="number" value="160" />
+        <div class="stat-unit">g / 日</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">当前体重</div>
+        <input class="stat-input" id="s-weight" type="number" value="98" />
+        <div class="stat-unit">kg</div>
       </div>
     </div>
-    <button class="primary" onclick="generateMenu()" id="btn-menu">重新生成菜单 ↗</button>
+    <div class="card">
+      <div class="card-label">今日推荐菜单</div>
+      <div id="menu-content">
+        <div class="menu-item"><span class="menu-name">早餐：鸡蛋3个 + 全麦面包1片</span><span class="menu-kcal">380 kcal</span></div>
+        <div class="menu-item"><span class="menu-name">午餐：鸡胸肉200g + 糙米100g + 西兰花</span><span class="menu-kcal">520 kcal</span></div>
+        <div class="menu-item"><span class="menu-name">加餐：希腊酸奶 + 蓝莓</span><span class="menu-kcal">180 kcal</span></div>
+        <div class="menu-item"><span class="menu-name">晚餐：三文鱼150g + 蔬菜沙拉</span><span class="menu-kcal">420 kcal</span></div>
+        <div class="menu-item total"><span class="menu-name">合计</span><span class="menu-kcal">1500 kcal · 蛋白质约 155g</span></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" onclick="generateMenu()" id="btn-menu">重新生成 ↗</button>
+      <button class="secondary" onclick="clearReply('menu-reply')">清空</button>
+    </div>
     <div id="menu-reply"></div>
   </div>
 
   <div id="tab-log" class="section">
     <div class="card">
-      <div class="label">今天实际吃了什么</div>
-      <textarea id="food-input" placeholder="随便写，比如：早上吃了两个鸡蛋，午饭点了外卖炒饭，下午喝了一杯奶茶，晚上不饿没吃…"></textarea>
-      <div class="hint">AI 会估算热量、找出问题、给今天剩余时间的补救方案或明天调整建议。不评判，只给方案。</div>
+      <div class="card-label">今天实际吃了什么</div>
+      <textarea id="food-input" placeholder="随便写就行，比如：早上吃了两个鸡蛋，午饭外卖点了炒饭，下午喝了一杯奶茶，晚上不饿没吃…"></textarea>
+      <div class="hint">AI 会估算热量缺口、找出主要问题、给今天剩余时间的补救方案或明天的调整建议。</div>
     </div>
-    <button class="primary" onclick="analyzeFood()" id="btn-log">分析 + 补救方案 ↗</button>
+    <div class="btn-row">
+      <button class="primary" onclick="analyzeFood()" id="btn-log">分析 + 补救方案 ↗</button>
+      <button class="secondary" onclick="clearReply('log-reply')">清空</button>
+    </div>
     <div id="log-reply"></div>
   </div>
 
   <div id="tab-knowledge" class="section">
     <div class="card">
-      <div class="label">上传减脂知识 <span class="badge">自定义</span></div>
-      <textarea id="knowledge-input" style="min-height:160px;" placeholder="把你收藏的健身博主笔记粘贴进来，AI 回答时会优先参考这里的内容。&#10;&#10;例如：&#10;· 蛋白质按体重每公斤2g计算&#10;· 减脂期保留20%复合碳水&#10;· 训练后30分钟内补充蛋白质效果更好…"></textarea>
-      <div class="hint" style="margin-top:8px;">当前：<span id="kb-count">0</span> 字 · 保存后下次打开自动加载</div>
+      <div class="card-label">上传减脂知识 <span class="badge">优先参考</span></div>
+      <textarea id="knowledge-input" style="min-height:180px;" placeholder="把你收藏的健身博主笔记粘贴进来，AI 生成菜单和分析饮食时会优先参考这里的内容。&#10;&#10;例如：&#10;· 蛋白质按体重每公斤2g计算&#10;· 减脂期保留20%复合碳水&#10;· 训练后30分钟内补充蛋白质效果更好…"></textarea>
+      <div class="kb-meta">当前知识库：<span id="kb-count">0</span> 字</div>
     </div>
-    <button class="primary" onclick="saveKnowledge()">保存知识库</button>
+    <div class="btn-row">
+      <button class="primary" onclick="saveKnowledge()">保存知识库</button>
+      <button class="secondary" onclick="clearKb()">清空</button>
+    </div>
     <div id="kb-reply"></div>
   </div>
-</div>
 
+</div>
 <script>
   let knowledgeBase = localStorage.getItem('kb') || '';
   let apiKey = localStorage.getItem('api_key') || '';
 
-  if (apiKey) { document.getElementById('api-key').value = apiKey; document.getElementById('key-saved').style.display = 'inline'; }
-  if (knowledgeBase) { document.getElementById('knowledge-input').value = knowledgeBase; document.getElementById('kb-count').textContent = knowledgeBase.length; }
+  function updateKeyStatus() {
+    const dot = document.getElementById('key-dot');
+    const label = document.getElementById('key-toggle-label');
+    if (apiKey) {
+      dot.classList.add('saved');
+      label.textContent = 'API Key 已配置 — 点击修改';
+    } else {
+      dot.classList.remove('saved');
+      label.textContent = 'API Key 未设置 — 点击配置';
+    }
+  }
+
+  function toggleKey() {
+    const panel = document.getElementById('key-panel');
+    panel.classList.toggle('open');
+  }
+
+  if (apiKey) { document.getElementById('api-key').value = apiKey; }
+  updateKeyStatus();
+
+  if (knowledgeBase) {
+    document.getElementById('knowledge-input').value = knowledgeBase;
+    document.getElementById('kb-count').textContent = knowledgeBase.length;
+  }
+
+  ['s-kcal','s-protein','s-weight'].forEach(id => {
+    const saved = localStorage.getItem(id.replace('-','_'));
+    if (saved) document.getElementById(id).value = saved;
+    document.getElementById(id).addEventListener('change', function() {
+      localStorage.setItem(id.replace('-','_'), this.value);
+    });
+  });
 
   document.getElementById('knowledge-input').addEventListener('input', function() {
     document.getElementById('kb-count').textContent = this.value.length;
@@ -126,15 +223,26 @@
   function saveKey() {
     apiKey = document.getElementById('api-key').value.trim();
     localStorage.setItem('api_key', apiKey);
-    document.getElementById('key-saved').style.display = 'inline';
+    updateKeyStatus();
+    document.getElementById('key-panel').classList.remove('open');
   }
 
   function saveKnowledge() {
     knowledgeBase = document.getElementById('knowledge-input').value.trim();
     localStorage.setItem('kb', knowledgeBase);
     document.getElementById('kb-count').textContent = knowledgeBase.length;
-    document.getElementById('kb-reply').innerHTML = '<div class="ai-block">已保存到本地，下次打开自动加载。</div>';
+    document.getElementById('kb-reply').innerHTML = '<div class="ai-block">已保存，下次打开自动加载。</div>';
   }
+
+  function clearKb() {
+    document.getElementById('knowledge-input').value = '';
+    document.getElementById('kb-count').textContent = '0';
+    knowledgeBase = '';
+    localStorage.removeItem('kb');
+    document.getElementById('kb-reply').innerHTML = '<div class="ai-block">已清空。</div>';
+  }
+
+  function clearReply(id) { document.getElementById(id).innerHTML = ''; }
 
   function switchTab(name, el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -143,13 +251,26 @@
     el.classList.add('active');
   }
 
+  function getStats() {
+    return {
+      kcal: document.getElementById('s-kcal').value || 1800,
+      protein: document.getElementById('s-protein').value || 160,
+      weight: document.getElementById('s-weight').value || 98
+    };
+  }
+
   function buildSystem(extra) {
-    const kb = knowledgeBase ? '\n\n用户上传的减脂知识库（优先参考）：\n' + knowledgeBase : '';
-    return '你是一个务实的减脂顾问。用户男性，25岁，98kg，三亚独居，严格减脂期。目标：1800kcal/日，蛋白质160g+，低碳高蛋白。回答风格：直接、简洁、实操，不废话，不鼓励，不说教，给方案就行。' + kb + extra;
+    const s = getStats();
+    const kb = knowledgeBase ? '\n\n用户上传的减脂知识库（优先参考，与通用建议冲突时以此为准）：\n' + knowledgeBase : '';
+    return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：${s.kcal}kcal/日，蛋白质${s.protein}g以上，低碳高蛋白。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
   }
 
   async function callClaude(sys, msg, targetEl, btnEl) {
-    if (!apiKey) { targetEl.innerHTML = '<div class="ai-block error">先填入 API Key 并保存。</div>'; return; }
+    if (!apiKey) {
+      document.getElementById('key-panel').classList.add('open');
+      targetEl.innerHTML = '<div class="ai-block error">先配置 API Key。</div>';
+      return;
+    }
     btnEl.disabled = true;
     targetEl.innerHTML = '<div class="ai-block loading">分析中…</div>';
     try {
@@ -161,7 +282,12 @@
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: msg }] })
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: sys,
+          messages: [{ role: 'user', content: msg }]
+        })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
@@ -173,9 +299,10 @@
   }
 
   function generateMenu() {
+    const s = getStats();
     callClaude(
-      buildSystem('\n\n生成今日减脂菜单。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质，结尾合计。'),
-      '帮我生成今天的减脂菜单，要实际能买到或点到的。',
+      buildSystem(`\n\n任务：生成今日完整减脂菜单。总热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质克数，结尾合计。有知识库则结尾说明参考了哪条原则。`),
+      '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的。',
       document.getElementById('menu-reply'), document.getElementById('btn-menu')
     );
   }
@@ -183,8 +310,9 @@
   function analyzeFood() {
     const food = document.getElementById('food-input').value.trim();
     if (!food) { alert('先写今天吃了什么'); return; }
+    const s = getStats();
     callClaude(
-      buildSystem('\n\n用户告诉你他今天实际吃了什么。1.粗估热量和蛋白质。2.指出主要问题。3.给今天剩余时间的补救方案或明天调整建议。不评判，只解决。'),
+      buildSystem(`\n\n任务：分析用户今天的饮食。1.粗估总热量和蛋白质，与目标（${s.kcal}kcal / 蛋白质${s.protein}g）对比写出缺口或超出量。2.指出最主要1-2个问题。3.给今天剩余时间的具体补救方案或明天调整建议（越具体越好）。有知识库则补救优先参考知识库原则。不评判，只给方案。`),
       '我今天吃了：' + food,
       document.getElementById('log-reply'), document.getElementById('btn-log')
     );
