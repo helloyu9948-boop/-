@@ -17,8 +17,8 @@ export default async function handler(req, res) {
         'Authorization': 'Bearer ' + apiKey
       },
       body: JSON.stringify({
-        model: 'doubao-seed-2-0-pro-260215',
-        max_tokens: 1000,
+        model: 'doubao-1-5-lite-32k',
+        max_tokens: 400,
         messages: [
           { role: 'system', content: system },
           ...messages
