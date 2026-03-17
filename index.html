@@ -16,18 +16,15 @@
   html { background: var(--bg); color: var(--text); font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; font-size: 15px; line-height: 1.6; }
   body { min-height: 100vh; }
   .app { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
-
   .hero { margin-bottom: 3rem; }
   .hero h1 { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 6px; }
   .hero h1 span { color: var(--accent); }
   .hero p { font-size: 14px; color: var(--text3); letter-spacing: 0.06em; }
-
   .key-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 2rem; cursor: pointer; width: fit-content; }
   .key-toggle-label { font-size: 12px; color: var(--text3); letter-spacing: 0.06em; }
   .key-toggle-label:hover { color: var(--text2); }
   .key-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.2s; }
   .key-dot.saved { background: var(--accent); }
-
   .key-panel { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: none; }
   .key-panel.open { display: block; }
   .key-inner-label { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
@@ -35,52 +32,42 @@
   .key-row input { flex: 1; padding: 10px 14px; font-size: 13px; font-family: inherit; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); }
   .key-row input:focus { outline: none; border-color: var(--accent); }
   .key-row input::placeholder { color: var(--text3); }
-  .key-hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
-
+  .key-hint { font-size: 12px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
   .tabs { display: flex; gap: 4px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 5px; margin-bottom: 1.75rem; }
   .tab { flex: 1; padding: 9px 0; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); border-radius: 10px; font-family: inherit; transition: all 0.15s; }
   .tab:hover { color: var(--text); }
   .tab.active { background: var(--bg4); color: var(--text); font-weight: 500; }
-
   .section { display: none; }
   .section.active { display: block; }
-
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
   .stat { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
   .stat-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
   .stat-input { font-size: 28px; font-weight: 600; background: none; border: none; color: var(--text); width: 100%; font-family: inherit; padding: 0; letter-spacing: -0.02em; }
   .stat-input:focus { outline: none; color: var(--accent); }
   .stat-unit { font-size: 12px; color: var(--text3); margin-top: 4px; }
-
   .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
   .card-label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
-
   .menu-item { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; gap: 16px; }
   .menu-item:last-child { border-bottom: none; padding-bottom: 0; }
   .menu-item.total { font-weight: 500; padding-top: 14px; }
   .menu-name { color: var(--text); flex: 1; }
   .menu-kcal { color: var(--text2); font-size: 13px; white-space: nowrap; flex-shrink: 0; }
   .menu-item.total .menu-kcal { color: var(--accent); font-size: 14px; }
-
   textarea { width: 100%; resize: vertical; padding: 12px 14px; font-size: 14px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); line-height: 1.7; min-height: 110px; }
   textarea:focus { outline: none; border-color: var(--border2); }
   textarea::placeholder { color: var(--text3); }
   .hint { font-size: 12px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
-
   .btn-row { display: flex; align-items: center; gap: 12px; }
   button.primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #0a0a0a; border: none; border-radius: var(--radius-sm); padding: 11px 22px; font-size: 14px; cursor: pointer; font-family: inherit; font-weight: 600; transition: opacity 0.15s; }
   button.primary:hover { opacity: 0.88; }
   button.primary:disabled { opacity: 0.3; cursor: not-allowed; }
   button.secondary { display: inline-flex; align-items: center; background: none; color: var(--text2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 18px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
   button.secondary:hover { color: var(--text); border-color: var(--text3); }
-
   .ai-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-top: 1.25rem; font-size: 14px; line-height: 1.9; color: var(--text); white-space: pre-wrap; }
   .ai-block.loading { color: var(--text3); font-style: italic; }
   .ai-block.error { color: #e05c5c; border-color: rgba(224,92,92,0.2); }
-
   .kb-meta { font-size: 12px; color: var(--text3); margin-top: 8px; }
   .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; background: rgba(212,245,122,0.1); color: var(--accent); margin-left: 8px; border: 0.5px solid rgba(212,245,122,0.2); }
-
   @media (max-width: 500px) {
     .app { padding: 2rem 1rem 5rem; }
     .hero h1 { font-size: 28px; }
@@ -91,7 +78,6 @@
 </head>
 <body>
 <div class="app">
-
   <div class="hero">
     <h1>今天吃了么<span>.</span></h1>
     <p>今天瘦了么</p>
@@ -99,16 +85,19 @@
 
   <div class="key-toggle" onclick="toggleKey()">
     <div class="key-dot" id="key-dot"></div>
-    <span class="key-toggle-label" id="key-toggle-label">API Key 未设置 — 点击配置</span>
+    <span class="key-toggle-label" id="key-toggle-label">豆包 API Key 未设置 — 点击配置</span>
   </div>
 
   <div class="key-panel" id="key-panel">
-    <div class="key-inner-label">Anthropic API Key</div>
+    <div class="key-inner-label">豆包 API Key（火山引擎）</div>
     <div class="key-row">
-      <input type="password" id="api-key" placeholder="sk-ant-..." />
+      <input type="password" id="api-key" placeholder="填入你的火山引擎 API Key" />
       <button class="primary" onclick="saveKey()" style="padding:10px 18px;font-size:13px;">保存</button>
     </div>
-    <div class="key-hint">Key 只存在本地浏览器，不会上传任何地方。没有 Key 去 console.anthropic.com 申请。</div>
+    <div class="key-hint">
+      去哪里拿 Key：console.volcengine.com → 火山方舟 → API Key → 创建<br>
+      Key 只存在本地浏览器，不会上传任何地方。
+    </div>
   </div>
 
   <div class="tabs">
@@ -177,30 +166,33 @@
     </div>
     <div id="kb-reply"></div>
   </div>
-
 </div>
+
 <script>
   let knowledgeBase = localStorage.getItem('kb') || '';
   let apiKey = localStorage.getItem('api_key') || '';
+
+  // 豆包接口配置
+  const DOUBAO_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+  const DOUBAO_MODEL = 'doubao-1-5-pro-32k';
 
   function updateKeyStatus() {
     const dot = document.getElementById('key-dot');
     const label = document.getElementById('key-toggle-label');
     if (apiKey) {
       dot.classList.add('saved');
-      label.textContent = 'API Key 已配置 — 点击修改';
+      label.textContent = '豆包 API Key 已配置 — 点击修改';
     } else {
       dot.classList.remove('saved');
-      label.textContent = 'API Key 未设置 — 点击配置';
+      label.textContent = '豆包 API Key 未设置 — 点击配置';
     }
   }
 
   function toggleKey() {
-    const panel = document.getElementById('key-panel');
-    panel.classList.toggle('open');
+    document.getElementById('key-panel').classList.toggle('open');
   }
 
-  if (apiKey) { document.getElementById('api-key').value = apiKey; }
+  if (apiKey) document.getElementById('api-key').value = apiKey;
   updateKeyStatus();
 
   if (knowledgeBase) {
@@ -265,33 +257,38 @@
     return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：${s.kcal}kcal/日，蛋白质${s.protein}g以上，低碳高蛋白。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
   }
 
+  // 豆包用 OpenAI 兼容格式：
+  // - URL 换成火山引擎地址
+  // - headers 用 Authorization: Bearer
+  // - system 作为 messages 数组第一条
+  // - 回复在 data.choices[0].message.content 里
   async function callClaude(sys, msg, targetEl, btnEl) {
     if (!apiKey) {
       document.getElementById('key-panel').classList.add('open');
-      targetEl.innerHTML = '<div class="ai-block error">先配置 API Key。</div>';
+      targetEl.innerHTML = '<div class="ai-block error">先配置豆包 API Key。</div>';
       return;
     }
     btnEl.disabled = true;
     targetEl.innerHTML = '<div class="ai-block loading">分析中…</div>';
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch(DOUBAO_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
+          'Authorization': 'Bearer ' + apiKey
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: DOUBAO_MODEL,
           max_tokens: 1000,
-          system: sys,
-          messages: [{ role: 'user', content: msg }]
+          messages: [
+            { role: 'system', content: sys },
+            { role: 'user', content: msg }
+          ]
         })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
-      const text = data.content?.map(b => b.text || '').join('') || '没有拿到回复。';
+      const text = data.choices?.[0]?.message?.content || '没有拿到回复。';
       targetEl.innerHTML = '<div class="ai-block">' + text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</div>';
     } catch(e) {
       targetEl.innerHTML = '<div class="ai-block error">请求失败：' + e.message + '</div>';
