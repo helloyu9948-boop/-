@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>减脂AI顾问</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e0e; --bg2: #161616; --bg3: #1f1f1f;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0; --text2: #888; --text3: #555;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; font-size: 15px; line-height: 1.6; }
+  .app { max-width: 640px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 18px; font-weight: 500; margin-bottom: 0.2rem; }
+  .sub { font-size: 13px; color: var(--text2); margin-bottom: 2rem; }
+  .label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1.75rem; }
+  .tab { padding: 8px 18px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); border-bottom: 2px solid transparent; font-family: inherit; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+  .section { display: none; }
+  .section.active { display: block; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .stat { background: var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 500; }
+  .stat-unit { font-size: 11px; color: var(--text2); }
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .menu-item { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; gap: 12px; }
+  .menu-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .menu-kcal { color: var(--text2); font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+  textarea { width: 100%; resize: vertical; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); line-height: 1.7; min-height: 100px; }
+  textarea:focus { outline: none; border-color: var(--border2); }
+  textarea::placeholder { color: var(--text3); }
+  .hint { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+  button.primary { display: inline-flex; align-items: center; gap: 6px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); padding: 9px 18px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500; }
+  button.primary:hover { opacity: 0.88; }
+  button.primary:disabled { opacity: 0.3; cursor: not-allowed; }
+  .ai-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-top: 1rem; font-size: 14px; line-height: 1.85; color: var(--text); white-space: pre-wrap; }
+  .ai-block.loading { color: var(--text3); }
+  .ai-block.error { color: #e05c5c; }
+  .api-row { display: flex; gap: 8px; align-items: center; margin-bottom: 1.5rem; }
+  .api-row input { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); }
+  .api-row input:focus { outline: none; border-color: var(--border2); }
+  .api-row input::placeholder { color: var(--text3); }
+  .api-saved { font-size: 12px; color: #6bcb77; margin-left: 4px; display: none; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 99px; background: rgba(255,255,255,0.07); color: var(--text2); margin-left: 8px; }
+  @media (max-width: 480px) { .app { padding: 1.25rem 1rem 3rem; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>减脂 AI 顾问</h1>
+  <p class="sub">98kg · 三亚 · 断糖减脂中</p>
+
+  <div style="margin-bottom:1.5rem;">
+    <div class="label">Anthropic API Key</div>
+    <div class="api-row">
+      <input type="password" id="api-key" placeholder="sk-ant-..." />
+      <button class="primary" onclick="saveKey()">保存</button>
+      <span class="api-saved" id="key-saved">✓ 已保存</span>
+    </div>
+    <div class="hint">Key 只存在本地浏览器，不会上传任何地方。没有 Key 去 console.anthropic.com 免费申请。</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('menu',this)">今日菜单</button>
+    <button class="tab" onclick="switchTab('log',this)">吃了什么</button>
+    <button class="tab" onclick="switchTab('knowledge',this)">知识库</button>
+  </div>
+
+  <div id="tab-menu" class="section active">
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">目标热量</div><div class="stat-val">1800<span class="stat-unit"> kcal</span></div></div>
+      <div class="stat"><div class="stat-label">蛋白质目标</div><div class="stat-val">160<span class="stat-unit"> g</span></div></div>
+      <div class="stat"><div class="stat-label">体重</div><div class="stat-val">98<span class="stat-unit"> kg</span></div></div>
+    </div>
+    <div class="card">
+      <div class="label">今日推荐菜单</div>
+      <div id="menu-content">
+        <div class="menu-item"><span>早餐：鸡蛋3个 + 全麦面包1片</span><span class="menu-kcal">约 380 kcal</span></div>
+        <div class="menu-item"><span>午餐：鸡胸肉200g + 糙米100g + 西兰花</span><span class="menu-kcal">约 520 kcal</span></div>
+        <div class="menu-item"><span>加餐：希腊酸奶 + 蓝莓</span><span class="menu-kcal">约 180 kcal</span></div>
+        <div class="menu-item"><span>晚餐：三文鱼150g + 蔬菜沙拉</span><span class="menu-kcal">约 420 kcal</span></div>
+        <div class="menu-item" style="font-weight:500;"><span>合计</span><span class="menu-kcal" style="color:var(--text)">1500 kcal · 蛋白质约 155g</span></div>
+      </div>
+    </div>
+    <button class="primary" onclick="generateMenu()" id="btn-menu">重新生成菜单 ↗</button>
+    <div id="menu-reply"></div>
+  </div>
+
+  <div id="tab-log" class="section">
+    <div class="card">
+      <div class="label">今天实际吃了什么</div>
+      <textarea id="food-input" placeholder="随便写，比如：早上吃了两个鸡蛋，午饭点了外卖炒饭，下午喝了一杯奶茶，晚上不饿没吃…"></textarea>
+      <div class="hint">AI 会估算热量、找出问题、给今天剩余时间的补救方案或明天调整建议。不评判，只给方案。</div>
+    </div>
+    <button class="primary" onclick="analyzeFood()" id="btn-log">分析 + 补救方案 ↗</button>
+    <div id="log-reply"></div>
+  </div>
+
+  <div id="tab-knowledge" class="section">
+    <div class="card">
+      <div class="label">上传减脂知识 <span class="badge">自定义</span></div>
+      <textarea id="knowledge-input" style="min-height:160px;" placeholder="把你收藏的健身博主笔记粘贴进来，AI 回答时会优先参考这里的内容。&#10;&#10;例如：&#10;· 蛋白质按体重每公斤2g计算&#10;· 减脂期保留20%复合碳水&#10;· 训练后30分钟内补充蛋白质效果更好…"></textarea>
+      <div class="hint" style="margin-top:8px;">当前：<span id="kb-count">0</span> 字 · 保存后下次打开自动加载</div>
+    </div>
+    <button class="primary" onclick="saveKnowledge()">保存知识库</button>
+    <div id="kb-reply"></div>
+  </div>
+</div>
+
+<script>
+  let knowledgeBase = localStorage.getItem('kb') || '';
+  let apiKey = localStorage.getItem('api_key') || '';
+
+  if (apiKey) { document.getElementById('api-key').value = apiKey; document.getElementById('key-saved').style.display = 'inline'; }
+  if (knowledgeBase) { document.getElementById('knowledge-input').value = knowledgeBase; document.getElementById('kb-count').textContent = knowledgeBase.length; }
+
+  document.getElementById('knowledge-input').addEventListener('input', function() {
+    document.getElementById('kb-count').textContent = this.value.length;
+  });
+
+  function saveKey() {
+    apiKey = document.getElementById('api-key').value.trim();
+    localStorage.setItem('api_key', apiKey);
+    document.getElementById('key-saved').style.display = 'inline';
+  }
+
+  function saveKnowledge() {
+    knowledgeBase = document.getElementById('knowledge-input').value.trim();
+    localStorage.setItem('kb', knowledgeBase);
+    document.getElementById('kb-count').textContent = knowledgeBase.length;
+    document.getElementById('kb-reply').innerHTML = '<div class="ai-block">已保存到本地，下次打开自动加载。</div>';
+  }
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function buildSystem(extra) {
+    const kb = knowledgeBase ? '\n\n用户上传的减脂知识库（优先参考）：\n' + knowledgeBase : '';
+    return '你是一个务实的减脂顾问。用户男性，25岁，98kg，三亚独居，严格减脂期。目标：1800kcal/日，蛋白质160g+，低碳高蛋白。回答风格：直接、简洁、实操，不废话，不鼓励，不说教，给方案就行。' + kb + extra;
+  }
+
+  async function callClaude(sys, msg, targetEl, btnEl) {
+    if (!apiKey) { targetEl.innerHTML = '<div class="ai-block error">先填入 API Key 并保存。</div>'; return; }
+    btnEl.disabled = true;
+    targetEl.innerHTML = '<div class="ai-block loading">分析中…</div>';
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: msg }] })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content?.map(b => b.text || '').join('') || '没有拿到回复。';
+      targetEl.innerHTML = '<div class="ai-block">' + text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</div>';
+    } catch(e) {
+      targetEl.innerHTML = '<div class="ai-block error">请求失败：' + e.message + '</div>';
+    } finally { btnEl.disabled = false; }
+  }
+
+  function generateMenu() {
+    callClaude(
+      buildSystem('\n\n生成今日减脂菜单。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质，结尾合计。'),
+      '帮我生成今天的减脂菜单，要实际能买到或点到的。',
+      document.getElementById('menu-reply'), document.getElementById('btn-menu')
+    );
+  }
+
+  function analyzeFood() {
+    const food = document.getElementById('food-input').value.trim();
+    if (!food) { alert('先写今天吃了什么'); return; }
+    callClaude(
+      buildSystem('\n\n用户告诉你他今天实际吃了什么。1.粗估热量和蛋白质。2.指出主要问题。3.给今天剩余时间的补救方案或明天调整建议。不评判，只解决。'),
+      '我今天吃了：' + food,
+      document.getElementById('log-reply'), document.getElementById('btn-log')
+    );
+  }
+</script>
+</body>
+</html>
