@@ -9,15 +9,17 @@ export default async function handler(req, res) {
   const { messages, system, apiKey } = req.body;
   if (!apiKey) return res.status(400).json({ error: 'Missing API key' });
 
+  const trimmedKey = apiKey.trim();
+
   try {
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey
+        'Authorization': 'Bearer ' + trimmedKey
       },
       body: JSON.stringify({
-        model: 'doubao-1-5-vision-pro-32k',
+        model: 'ep-20260318042159-44mqt',
         max_tokens: 500,
         messages: [
           { role: 'system', content: system },
