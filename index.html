@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>吃了么</title>
+<title>今天吃了么</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -16,12 +16,10 @@
   html { background: var(--bg); color: var(--text); font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif; font-size: 16px; line-height: 1.6; }
   body { min-height: 100vh; }
   .app { max-width: 860px; margin: 0 auto; padding: 3.5rem 2rem 7rem; }
-
   .hero { margin-bottom: 3rem; }
   .hero h1 { font-size: 48px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 8px; }
   .hero h1 span { color: var(--accent); }
   .hero p { font-size: 15px; color: var(--text3); letter-spacing: 0.06em; }
-
   .key-toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; cursor: pointer; width: fit-content; }
   .key-toggle-label { font-size: 13px; color: var(--text3); }
   .key-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.2s; }
@@ -34,15 +32,12 @@
   .key-row input:focus { outline: none; border-color: var(--accent); }
   .key-row input::placeholder { color: var(--text3); }
   .key-hint { font-size: 12px; color: var(--text3); margin-top: 10px; line-height: 1.6; }
-
   .tabs { display: flex; gap: 4px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 6px; margin-bottom: 2rem; }
   .tab { flex: 1; padding: 11px 0; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--text2); border-radius: 12px; font-family: inherit; transition: all 0.15s; }
   .tab:hover { color: var(--text); }
   .tab.active { background: var(--bg4); color: var(--text); font-weight: 500; }
-
   .section { display: none; }
   .section.active { display: block; }
-
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.75rem; }
   .stat { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
   .stat-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
@@ -51,36 +46,37 @@
   .stat-input[readonly] { cursor: default; color: var(--text2); font-size: 26px; }
   .stat-unit { font-size: 12px; color: var(--text3); margin-top: 5px; }
   .stat.auto { border-color: rgba(212,245,122,0.1); }
-  .stat.auto .stat-label::after { content: ' · 自动'; color: rgba(212,245,122,0.4); }
-
+  .stat.auto .stat-label::after { content: ' · 自动'; color: rgba(212,245,122,0.3); }
   .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
   .card-label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
-
   .menu-item { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 0; border-bottom: 0.5px solid var(--border); font-size: 15px; gap: 20px; }
   .menu-item:last-child { border-bottom: none; padding-bottom: 0; }
   .menu-item.total { font-weight: 600; padding-top: 16px; }
   .menu-name { color: var(--text); flex: 1; }
   .menu-kcal { color: var(--text2); font-size: 14px; white-space: nowrap; flex-shrink: 0; }
   .menu-item.total .menu-kcal { color: var(--accent); font-size: 15px; }
-
-  textarea { width: 100%; resize: vertical; padding: 14px 16px; font-size: 15px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); line-height: 1.7; min-height: 120px; }
+  textarea { width: 100%; resize: vertical; padding: 14px 16px; font-size: 15px; font-family: inherit; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg3); color: var(--text); line-height: 1.7; min-height: 110px; }
   textarea:focus { outline: none; border-color: var(--border2); }
   textarea::placeholder { color: var(--text3); }
   .hint { font-size: 13px; color: var(--text3); margin-top: 10px; line-height: 1.6; }
-
-  .btn-row { display: flex; align-items: center; gap: 12px; }
+  .btn-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   button.primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #0a0a0a; border: none; border-radius: var(--radius-sm); padding: 13px 26px; font-size: 15px; cursor: pointer; font-family: inherit; font-weight: 700; transition: opacity 0.15s; }
   button.primary:hover { opacity: 0.88; }
   button.primary:disabled { opacity: 0.3; cursor: not-allowed; }
-  button.secondary { display: inline-flex; align-items: center; background: none; color: var(--text2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 13px 20px; font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  button.secondary { display: inline-flex; align-items: center; gap: 6px; background: none; color: var(--text2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 13px 20px; font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
   button.secondary:hover { color: var(--text); border-color: var(--text3); }
-
   .ai-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem 1.75rem; margin-top: 1.5rem; font-size: 15px; line-height: 1.9; color: var(--text); white-space: pre-wrap; }
   .ai-block.loading { color: var(--text3); font-style: italic; }
   .ai-block.error { color: #e05c5c; border-color: rgba(224,92,92,0.2); }
-
   .kb-meta { font-size: 13px; color: var(--text3); margin-top: 10px; }
   .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; background: rgba(212,245,122,0.1); color: var(--accent); margin-left: 8px; border: 0.5px solid rgba(212,245,122,0.2); }
+
+  .upload-area { border: 0.5px dashed var(--border2); border-radius: var(--radius-sm); padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.15s; margin-bottom: 12px; }
+  .upload-area:hover { border-color: var(--accent); }
+  .upload-area input { display: none; }
+  .upload-label { font-size: 13px; color: var(--text3); }
+  .upload-label span { color: var(--accent); }
+  .preview-img { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); margin-top: 10px; display: none; }
 
   @media (max-width: 600px) {
     .app { padding: 2rem 1.25rem 5rem; }
@@ -103,7 +99,7 @@
   </div>
 
   <div class="key-panel" id="key-panel">
-    <div class="key-inner-label">豆包 API Key（火山引擎）</div>
+    <div class="key-inner-label">豆包 API Key（火山方舟）</div>
     <div class="key-row">
       <input type="password" id="api-key" placeholder="填入你的火山方舟 API Key" />
       <button class="primary" onclick="saveKey()" style="padding:11px 20px;font-size:14px;">保存</button>
@@ -140,7 +136,6 @@
         <div class="stat-unit">g / 日</div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-label">今日推荐菜单</div>
       <div id="menu-content">
@@ -161,12 +156,19 @@
   <div id="tab-log" class="section">
     <div class="card">
       <div class="card-label">今天实际吃了什么</div>
-      <textarea id="food-input" placeholder="随便写就行，比如：早上吃了两个鸡蛋，午饭外卖点了炒饭，下午喝了一杯奶茶，晚上不饿没吃…"></textarea>
-      <div class="hint">AI 会估算热量缺口、找出主要问题、给今天剩余时间的补救方案或明天调整建议。</div>
+
+      <div class="upload-area" onclick="document.getElementById('img-upload').click()">
+        <input type="file" id="img-upload" accept="image/*" onchange="handleImage(this)" />
+        <div class="upload-label">📷 拍照上传今天吃的食物，AI 自动识别热量<br><span>点击选择图片</span>，支持 jpg / png / heic</div>
+        <img id="preview-img" class="preview-img" />
+      </div>
+
+      <textarea id="food-input" placeholder="或者直接文字描述，比如：早上吃了两个鸡蛋，午饭外卖点了炒饭，下午喝了一杯奶茶，晚上不饿没吃…&#10;&#10;图片和文字可以同时用。"></textarea>
+      <div class="hint">AI 会识别食物、估算热量缺口、找出问题、给补救方案。</div>
     </div>
     <div class="btn-row">
       <button class="primary" onclick="analyzeFood()" id="btn-log">分析 + 补救方案 ↗</button>
-      <button class="secondary" onclick="clearReply('log-reply')">清空</button>
+      <button class="secondary" onclick="clearLog()">清空</button>
     </div>
     <div id="log-reply"></div>
   </div>
@@ -188,15 +190,13 @@
 <script>
   let knowledgeBase = localStorage.getItem('kb') || '';
   let apiKey = localStorage.getItem('api_key') || '';
+  let imageBase64 = null;
 
   function autoCalc() {
     const w = parseFloat(document.getElementById('s-weight').value) || 90;
-    const kcal = Math.round(w * 22);
-    const protein = Math.round(w * 2);
-    const fat = Math.round(w * 0.8);
-    document.getElementById('s-kcal').value = kcal;
-    document.getElementById('s-protein').value = protein;
-    document.getElementById('s-fat').value = fat;
+    document.getElementById('s-kcal').value = Math.round(w * 22);
+    document.getElementById('s-protein').value = Math.round(w * 2);
+    document.getElementById('s-fat').value = Math.round(w * 0.8);
     localStorage.setItem('s_weight', w);
   }
 
@@ -207,13 +207,8 @@
   function updateKeyStatus() {
     const dot = document.getElementById('key-dot');
     const label = document.getElementById('key-toggle-label');
-    if (apiKey) {
-      dot.classList.add('saved');
-      label.textContent = '豆包 API Key 已配置 — 点击修改';
-    } else {
-      dot.classList.remove('saved');
-      label.textContent = '豆包 API Key 未设置 — 点击配置';
-    }
+    if (apiKey) { dot.classList.add('saved'); label.textContent = '豆包 API Key 已配置 — 点击修改'; }
+    else { dot.classList.remove('saved'); label.textContent = '豆包 API Key 未设置 — 点击配置'; }
   }
 
   function toggleKey() { document.getElementById('key-panel').classList.toggle('open'); }
@@ -254,6 +249,29 @@
 
   function clearReply(id) { document.getElementById(id).innerHTML = ''; }
 
+  function clearLog() {
+    document.getElementById('food-input').value = '';
+    document.getElementById('log-reply').innerHTML = '';
+    imageBase64 = null;
+    const preview = document.getElementById('preview-img');
+    preview.style.display = 'none';
+    preview.src = '';
+    document.getElementById('img-upload').value = '';
+  }
+
+  function handleImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imageBase64 = e.target.result.split(',')[1];
+      const preview = document.getElementById('preview-img');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
   function switchTab(name, el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -273,10 +291,10 @@
   function buildSystem(extra) {
     const s = getStats();
     const kb = knowledgeBase ? '\n\n用户上传的减脂知识库（优先参考，与通用建议冲突时以此为准）：\n' + knowledgeBase : '';
-    return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：热量${s.kcal}kcal/日，蛋白质${s.protein}g以上，脂肪不超过${s.fat}g，低碳高蛋白。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
+    return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：热量${s.kcal}kcal/日，蛋白质${s.protein}g以上，脂肪不超过${s.fat}g。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
   }
 
-  async function callAI(sys, msg, targetEl, btnEl) {
+  async function callAI(sys, messages, targetEl, btnEl) {
     if (!apiKey) {
       document.getElementById('key-panel').classList.add('open');
       targetEl.innerHTML = '<div class="ai-block error">先配置豆包 API Key。</div>';
@@ -288,11 +306,7 @@
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system: sys,
-          messages: [{ role: 'user', content: msg }],
-          apiKey: apiKey
-        })
+        body: JSON.stringify({ system: sys, messages, apiKey })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -304,22 +318,31 @@
 
   function generateMenu() {
     const s = getStats();
-    callAI(
-      buildSystem(`\n\n任务：生成今日完整减脂菜单。热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g，脂肪不超过${s.fat}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质克数，结尾合计三大营养素。有知识库则结尾说明参考了哪条原则。`),
-      '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的。',
-      document.getElementById('menu-reply'), document.getElementById('btn-menu')
-    );
+    const sys = buildSystem(`\n\n任务：生成今日完整减脂菜单。热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g，脂肪不超过${s.fat}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质克数，结尾合计。有知识库则结尾说明参考了哪条原则。`);
+    callAI(sys, [{ role: 'user', content: '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的。' }],
+      document.getElementById('menu-reply'), document.getElementById('btn-menu'));
   }
 
   function analyzeFood() {
     const food = document.getElementById('food-input').value.trim();
-    if (!food) { alert('先写今天吃了什么'); return; }
+    if (!food && !imageBase64) { alert('请上传食物图片或输入今天吃了什么'); return; }
+
     const s = getStats();
-    callAI(
-      buildSystem(`\n\n任务：分析用户今天的饮食。1.粗估总热量、蛋白质、脂肪，与目标（${s.kcal}kcal / 蛋白质${s.protein}g / 脂肪${s.fat}g）对比写出缺口或超出量。2.指出最主要1-2个问题。3.给今天剩余时间的具体补救方案或明天调整建议（越具体越好）。有知识库则优先参考知识库原则。不评判，只给方案。`),
-      '我今天吃了：' + food,
-      document.getElementById('log-reply'), document.getElementById('btn-log')
-    );
+    const sys = buildSystem(`\n\n任务：分析用户今天的饮食。如果有图片，先识别图片里的食物和大概分量。然后：1.粗估总热量、蛋白质、脂肪，与目标（${s.kcal}kcal / 蛋白质${s.protein}g / 脂肪${s.fat}g）对比写出缺口或超出量。2.指出最主要1-2个问题。3.给今天剩余时间的具体补救方案或明天调整建议。有知识库则优先参考知识库原则。不评判，只给方案。`);
+
+    let userContent;
+    if (imageBase64) {
+      userContent = [
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + imageBase64 } }
+      ];
+      if (food) userContent.push({ type: 'text', text: '补充说明：' + food });
+      else userContent.push({ type: 'text', text: '请识别图片里的食物并分析今天的饮食情况。' });
+    } else {
+      userContent = food;
+    }
+
+    callAI(sys, [{ role: 'user', content: userContent }],
+      document.getElementById('log-reply'), document.getElementById('btn-log'));
   }
 </script>
 </body>
