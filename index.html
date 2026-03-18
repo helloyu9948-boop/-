@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>今天吃了么</title>
+<title>吃了么</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -70,14 +70,18 @@
   .ai-block.error { color: #e05c5c; border-color: rgba(224,92,92,0.2); }
   .kb-meta { font-size: 13px; color: var(--text3); margin-top: 10px; }
   .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; background: rgba(212,245,122,0.1); color: var(--accent); margin-left: 8px; border: 0.5px solid rgba(212,245,122,0.2); }
-
   .upload-area { border: 0.5px dashed var(--border2); border-radius: var(--radius-sm); padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.15s; margin-bottom: 12px; }
   .upload-area:hover { border-color: var(--accent); }
   .upload-area input { display: none; }
   .upload-label { font-size: 13px; color: var(--text3); }
   .upload-label span { color: var(--accent); }
   .preview-img { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); margin-top: 10px; display: none; }
-
+  .history-section { margin-top: 2rem; }
+  .history-title { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+  .history-item { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 10px; }
+  .history-date { font-size: 12px; color: var(--accent); margin-bottom: 8px; font-weight: 500; }
+  .history-content { font-size: 13px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; }
+  .history-empty { font-size: 14px; color: var(--text3); padding: 1rem 0; }
   @media (max-width: 600px) {
     .app { padding: 2rem 1.25rem 5rem; }
     .hero h1 { font-size: 34px; }
@@ -89,7 +93,7 @@
 <body>
 <div class="app">
   <div class="hero">
-    <h1>今天吃了么<span>.</span></h1>
+    <h1>吃了么<span>.</span></h1>
     <p>今天瘦了么</p>
   </div>
 
@@ -110,7 +114,7 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('menu',this)">今日菜单</button>
     <button class="tab" onclick="switchTab('log',this)">吃了什么</button>
-    <button class="tab" onclick="switchTab('knowledge',this)">知识库</button>
+    <button class="tab" onclick="switchTab('knowledge',this)">减脂知识库</button>
   </div>
 
   <div id="tab-menu" class="section active">
@@ -156,26 +160,29 @@
   <div id="tab-log" class="section">
     <div class="card">
       <div class="card-label">今天实际吃了什么</div>
-
       <div class="upload-area" onclick="document.getElementById('img-upload').click()">
         <input type="file" id="img-upload" accept="image/*" onchange="handleImage(this)" />
         <div class="upload-label">📷 拍照上传今天吃的食物，AI 自动识别热量<br><span>点击选择图片</span>，支持 jpg / png / heic</div>
         <img id="preview-img" class="preview-img" />
       </div>
-
-      <textarea id="food-input" placeholder="或者直接文字描述，比如：早上吃了两个鸡蛋，午饭外卖点了炒饭，下午喝了一杯奶茶，晚上不饿没吃…&#10;&#10;图片和文字可以同时用。"></textarea>
-      <div class="hint">AI 会识别食物、估算热量缺口、找出问题、给补救方案。</div>
+      <textarea id="food-input" placeholder="或者直接文字描述，比如：早上吃了两个鸡蛋，午饭外卖点了炒饭，下午喝了一杯奶茶…&#10;&#10;图片和文字可以同时用。"></textarea>
+      <div class="hint">AI 会识别食物、估算热量缺口、找出问题、给补救方案。分析结果自动保存到历史记录。</div>
     </div>
     <div class="btn-row">
       <button class="primary" onclick="analyzeFood()" id="btn-log">分析 + 补救方案 ↗</button>
       <button class="secondary" onclick="clearLog()">清空</button>
     </div>
     <div id="log-reply"></div>
+
+    <div class="history-section">
+      <div class="history-title">历史记录</div>
+      <div id="history-list"></div>
+    </div>
   </div>
 
   <div id="tab-knowledge" class="section">
     <div class="card">
-      <div class="card-label">上传减脂知识 <span class="badge">优先参考</span></div>
+      <div class="card-label">减脂知识库 <span class="badge">优先参考</span></div>
       <textarea id="knowledge-input" style="min-height:200px;" placeholder="把你收藏的健身博主笔记粘贴进来，AI 生成菜单和分析饮食时会优先参考这里的内容。&#10;&#10;例如：&#10;· 蛋白质按体重每公斤2g计算&#10;· 减脂期保留20%复合碳水&#10;· 训练后30分钟内补充蛋白质效果更好…"></textarea>
       <div class="kb-meta">当前知识库：<span id="kb-count">0</span> 字</div>
     </div>
@@ -212,7 +219,6 @@
   }
 
   function toggleKey() { document.getElementById('key-panel').classList.toggle('open'); }
-
   if (apiKey) document.getElementById('api-key').value = apiKey;
   updateKeyStatus();
 
@@ -277,6 +283,7 @@
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     el.classList.add('active');
+    if (name === 'log') renderHistory();
   }
 
   function getStats() {
@@ -294,7 +301,35 @@
     return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：热量${s.kcal}kcal/日，蛋白质${s.protein}g以上，脂肪不超过${s.fat}g。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
   }
 
-  async function callAI(sys, messages, targetEl, btnEl) {
+  // 历史记录相关
+  function saveToHistory(text) {
+    const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+    const key = 'diet_' + new Date().toISOString().slice(0, 10);
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    existing.push({ time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), text });
+    localStorage.setItem(key, JSON.stringify(existing));
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('history-list');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('diet_')).sort().reverse();
+    if (keys.length === 0) {
+      list.innerHTML = '<div class="history-empty">还没有记录。分析饮食后自动保存到这里。</div>';
+      return;
+    }
+    list.innerHTML = keys.slice(0, 7).map(key => {
+      const date = key.replace('diet_', '');
+      const entries = JSON.parse(localStorage.getItem(key) || '[]');
+      return entries.map(e => `
+        <div class="history-item">
+          <div class="history-date">${date} ${e.time}</div>
+          <div class="history-content">${e.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+        </div>
+      `).join('');
+    }).join('');
+  }
+
+  async function callAI(sys, messages, targetEl, btnEl, saveHistory) {
     if (!apiKey) {
       document.getElementById('key-panel').classList.add('open');
       targetEl.innerHTML = '<div class="ai-block error">先配置豆包 API Key。</div>';
@@ -311,39 +346,46 @@
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       targetEl.innerHTML = '<div class="ai-block">' + data.text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</div>';
+      if (saveHistory) saveToHistory(data.text);
     } catch(e) {
       targetEl.innerHTML = '<div class="ai-block error">请求失败：' + e.message + '</div>';
     } finally { btnEl.disabled = false; }
   }
 
+  function getTodayContext() {
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    const now = new Date();
+    return `今天是${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日${days[now.getDay()]}，当前时间${now.getHours()}点。`;
+  }
+
   function generateMenu() {
     const s = getStats();
-    const sys = buildSystem(`\n\n任务：生成今日完整减脂菜单。热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g，脂肪不超过${s.fat}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。格式：每餐一行，标注热量和蛋白质克数，结尾合计。有知识库则结尾说明参考了哪条原则。`);
-    callAI(sys, [{ role: 'user', content: '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的。' }],
-      document.getElementById('menu-reply'), document.getElementById('btn-menu'));
+    // 加入随机因素：随机菜系偏好、随机心情、让每次生成不同
+    const variety = ['今天想吃海鲜为主', '今天想换换口味，以肉类为主', '今天想吃清淡一些', '今天想吃有饱腹感的', '今天想简单一点，容易备餐的'];
+    const pick = variety[Math.floor(Math.random() * variety.length)];
+    const sys = buildSystem(`\n\n任务：生成今日完整减脂菜单。${getTodayContext()}热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g，脂肪不超过${s.fat}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。今日偏好：${pick}。每次生成要与上次明显不同，食材和烹饪方式尽量多样化。格式：每餐一行，标注热量和蛋白质克数，结尾合计。有知识库则结尾说明参考了哪条原则。`);
+    callAI(sys, [{ role: 'user', content: '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的，和之前的菜单不一样。' }],
+      document.getElementById('menu-reply'), document.getElementById('btn-menu'), false);
   }
 
   function analyzeFood() {
     const food = document.getElementById('food-input').value.trim();
     if (!food && !imageBase64) { alert('请上传食物图片或输入今天吃了什么'); return; }
-
     const s = getStats();
-    const sys = buildSystem(`\n\n任务：分析用户今天的饮食。如果有图片，先识别图片里的食物和大概分量。然后：1.粗估总热量、蛋白质、脂肪，与目标（${s.kcal}kcal / 蛋白质${s.protein}g / 脂肪${s.fat}g）对比写出缺口或超出量。2.指出最主要1-2个问题。3.给今天剩余时间的具体补救方案或明天调整建议。有知识库则优先参考知识库原则。不评判，只给方案。`);
-
+    const sys = buildSystem(`\n\n任务：分析用户今天的饮食。${getTodayContext()}如果有图片，先识别图片里的食物和大概分量。然后：1.粗估总热量、蛋白质、脂肪，与目标（${s.kcal}kcal / 蛋白质${s.protein}g / 脂肪${s.fat}g）对比写出缺口或超出量。2.指出最主要1-2个问题。3.给今天剩余时间的具体补救方案或明天调整建议。有知识库则优先参考知识库原则。不评判，只给方案。`);
     let userContent;
     if (imageBase64) {
-      userContent = [
-        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + imageBase64 } }
-      ];
+      userContent = [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + imageBase64 } }];
       if (food) userContent.push({ type: 'text', text: '补充说明：' + food });
       else userContent.push({ type: 'text', text: '请识别图片里的食物并分析今天的饮食情况。' });
     } else {
       userContent = food;
     }
-
     callAI(sys, [{ role: 'user', content: userContent }],
-      document.getElementById('log-reply'), document.getElementById('btn-log'));
+      document.getElementById('log-reply'), document.getElementById('btn-log'), true);
   }
+
+  renderHistory();
 </script>
 </body>
 </html>
