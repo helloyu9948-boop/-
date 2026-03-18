@@ -1,4 +1,5 @@
 
+</html>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -49,6 +50,7 @@
   .stat.auto .stat-label::after { content: ' · 自动'; color: rgba(212,245,122,0.3); }
   .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
   .card-label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
+  .menu-placeholder { font-size: 14px; color: var(--text3); padding: 0.5rem 0 1rem; }
   .menu-item { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 0; border-bottom: 0.5px solid var(--border); font-size: 15px; gap: 20px; }
   .menu-item:last-child { border-bottom: none; padding-bottom: 0; }
   .menu-item.total { font-weight: 600; padding-top: 16px; }
@@ -143,15 +145,11 @@
     <div class="card">
       <div class="card-label">今日推荐菜单</div>
       <div id="menu-content">
-        <div class="menu-item"><span class="menu-name">早餐：鸡蛋3个 + 全麦面包1片</span><span class="menu-kcal">380 kcal</span></div>
-        <div class="menu-item"><span class="menu-name">午餐：鸡胸肉200g + 糙米100g + 西兰花</span><span class="menu-kcal">520 kcal</span></div>
-        <div class="menu-item"><span class="menu-name">加餐：希腊酸奶 + 蓝莓</span><span class="menu-kcal">180 kcal</span></div>
-        <div class="menu-item"><span class="menu-name">晚餐：三文鱼150g + 蔬菜沙拉</span><span class="menu-kcal">420 kcal</span></div>
-        <div class="menu-item total"><span class="menu-name">合计</span><span class="menu-kcal">1500 kcal · 蛋白质约 155g</span></div>
+        <div class="menu-placeholder">点击下方「生成今日菜单」，每次生成都不一样。</div>
       </div>
     </div>
     <div class="btn-row">
-      <button class="primary" onclick="generateMenu()" id="btn-menu">重新生成 ↗</button>
+      <button class="primary" onclick="generateMenu()" id="btn-menu">生成今日菜单 ↗</button>
       <button class="secondary" onclick="clearReply('menu-reply')">清空</button>
     </div>
     <div id="menu-reply"></div>
@@ -173,7 +171,6 @@
       <button class="secondary" onclick="clearLog()">清空</button>
     </div>
     <div id="log-reply"></div>
-
     <div class="history-section">
       <div class="history-title">历史记录</div>
       <div id="history-list"></div>
@@ -301,9 +298,7 @@
     return `你是一个务实的减脂顾问。用户男性，25岁，${s.weight}kg，三亚独居，严格减脂期。目标：热量${s.kcal}kcal/日，蛋白质${s.protein}g以上，脂肪不超过${s.fat}g。风格：直接、简洁、实操，不废话，不鼓励，不说教，只给方案。` + kb + extra;
   }
 
-  // 历史记录相关
   function saveToHistory(text) {
-    const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
     const key = 'diet_' + new Date().toISOString().slice(0, 10);
     const existing = JSON.parse(localStorage.getItem(key) || '[]');
     existing.push({ time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), text });
@@ -360,11 +355,10 @@
 
   function generateMenu() {
     const s = getStats();
-    // 加入随机因素：随机菜系偏好、随机心情、让每次生成不同
-    const variety = ['今天想吃海鲜为主', '今天想换换口味，以肉类为主', '今天想吃清淡一些', '今天想吃有饱腹感的', '今天想简单一点，容易备餐的'];
+    const variety = ['今天想以海鲜为主', '今天想以禽肉为主（鸡鸭）', '今天想吃清淡蔬菜为主', '今天想吃红肉（牛肉猪肉）', '今天想简单备餐，食材越少越好'];
     const pick = variety[Math.floor(Math.random() * variety.length)];
-    const sys = buildSystem(`\n\n任务：生成今日完整减脂菜单。${getTodayContext()}热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g，脂肪不超过${s.fat}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。今日偏好：${pick}。每次生成要与上次明显不同，食材和烹饪方式尽量多样化。格式：每餐一行，标注热量和蛋白质克数，结尾合计。有知识库则结尾说明参考了哪条原则。`);
-    callAI(sys, [{ role: 'user', content: '帮我生成今天的减脂菜单，要实际能买到或外卖能点到的，和之前的菜单不一样。' }],
+    const sys = buildSystem(`\n\n任务：生成今日完整减脂菜单。${getTodayContext()}热量控制在${s.kcal}kcal以内，蛋白质不低于${s.protein}g，脂肪不超过${s.fat}g。结合三亚本地食材（海鲜、热带蔬菜、外卖可选）。今日随机偏好：${pick}。必须与常见模板不同，食材和烹饪方式多样化。格式：每餐一行，标注热量和蛋白质克数，结尾合计三大营养素。有知识库则结尾说明参考了哪条原则。`);
+    callAI(sys, [{ role: 'user', content: `帮我生成今天的减脂菜单，偏好${pick}，要和之前不一样，实际能买到或外卖能点到的。` }],
       document.getElementById('menu-reply'), document.getElementById('btn-menu'), false);
   }
 
