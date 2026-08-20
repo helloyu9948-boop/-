@@ -13,9 +13,14 @@
                 <h1 class="text-3xl font-bold tracking-tight text-white">吃了么.</h1>
                 <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统</p>
             </div>
-            <button onclick="openSurveyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
-                📋 重新评估问卷
-            </button>
+            <div class="flex gap-2">
+                <button onclick="openKeyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
+                    🔑 设置 API Key
+                </button>
+                <button onclick="openSurveyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
+                    📋 评估问卷
+                </button>
+            </div>
         </header>
 
         <div id="profileBanner" class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 text-xs flex justify-between items-center">
@@ -67,6 +72,20 @@
         </div>
     </div>
 
+    <!-- API Key 设置弹窗 -->
+    <div id="keyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 space-y-4">
+            <h2 class="text-lg font-bold text-zinc-100">🔑 配置火山方舟 API Key</h2>
+            <p class="text-xs text-zinc-400">若在 Vercel 未配置环境变量，可直接在此输入 Key（将保存在你本地浏览器）：</p>
+            <input id="keyInput" type="password" placeholder="例如: 8a4fxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs text-zinc-100 focus:outline-none focus:border-lime-400">
+            <div class="flex gap-2">
+                <button onclick="saveKey()" class="flex-1 bg-lime-400 text-zinc-950 font-bold py-2 rounded-lg text-xs hover:bg-lime-300 transition">保存 Key</button>
+                <button onclick="closeKeyModal()" class="bg-zinc-800 text-zinc-300 py-2 px-4 rounded-lg text-xs hover:bg-zinc-700 transition">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问卷弹窗 -->
     <div id="surveyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 space-y-5">
             <h2 class="text-lg font-bold text-zinc-100 flex items-center justify-between">
@@ -118,6 +137,27 @@
             initSurveyState();
             setupGlobalPasteListener();
         });
+
+        function openKeyModal() {
+            document.getElementById('keyInput').value = localStorage.getItem('doubao_key') || '';
+            document.getElementById('keyModal').classList.remove('hidden');
+        }
+
+        function closeKeyModal() {
+            document.getElementById('keyModal').classList.add('hidden');
+        }
+
+        function saveKey() {
+            const val = document.getElementById('keyInput').value.trim();
+            if (val) {
+                localStorage.setItem('doubao_key', val);
+                alert('Key 保存成功！');
+            } else {
+                localStorage.removeItem('doubao_key');
+                alert('已清除本地 Key，系统将回退使用 Vercel 后台配置的环境变量。');
+            }
+            closeKeyModal();
+        }
 
         function setupGlobalPasteListener() {
             document.addEventListener('paste', (e) => {
@@ -271,7 +311,6 @@
             resBox.innerText = 'AI 正在分析食物并根据你的状态计算方案...';
 
             try {
-                // 指向你的真实后端地址 /api/chat
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
