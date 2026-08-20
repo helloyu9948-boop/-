@@ -1,127 +1,66 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>吃了么 - 极客减脂系统</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen p-4 md:p-8">
-    <div class="max-w-2xl mx-auto space-y-6">
-        <!-- 头部 -->
-        <header class="flex justify-between items-center border-b border-zinc-800 pb-4">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight text-white">吃了么.</h1>
-                <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统</p>
-            </div>
-            <button onclick="openSurveyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
-                📋 重新评估问卷
-            </button>
-        </header>
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-        <!-- 当前画像状态栏 -->
-        <div id="profileBanner" class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 text-xs flex justify-between items-center">
-            <div>
-                <span class="text-zinc-400">当前模式：</span>
-                <span id="planLabel" class="font-bold text-lime-400">检测中...</span>
-                <span class="text-zinc-500 mx-2">|</span>
-                <span class="text-zinc-400">疲劳指数：</span>
-                <span id="fatigueLabel" class="font-bold text-amber-400">1/5</span>
-            </div>
-            <span id="nextSurveyTip" class="text-zinc-500">周期：第 1 天</span>
-        </div>
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-        <!-- 输入与图片上传核心区 -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
-            <div class="space-y-2">
-                <label class="block text-xs font-medium text-zinc-400">记录饮食 / 粘贴截图 (Ctrl+V) / 拍照</label>
-                
-                <textarea id="userInput" placeholder="PC端直接按 Ctrl+V 粘贴截图，或直接输入文字描述..." class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
-                
-                <!-- 图片预览区 -->
-                <div id="imagePreviewContainer" class="hidden flex items-center gap-3 bg-zinc-950 p-2 rounded-lg border border-zinc-800">
-                    <img id="imagePreview" class="h-16 w-16 object-cover rounded border border-zinc-700" src="" alt="Preview">
-                    <div class="flex-1 text-xs text-zinc-400 truncate">
-                        <span id="imageName">已挂载图片</span>
-                        <p class="text-zinc-600">已自动转换准备提交给 AI</p>
-                    </div>
-                    <button onclick="removeImage()" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1">清除</button>
-                </div>
-            </div>
+  const { messages, apiKey, fatigueScore, planMode, imageBase64 } = req.body;
+  const trimmedKey = (apiKey || '').trim();
 
-            <!-- 操作按钮：PC/手机双端适配 -->
-            <div class="flex gap-2">
-                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
-                    <span>📷 手机直接拍照</span>
-                    <input type="file" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="hidden">
-                </label>
+  const systemPrompt = `你是一个兼具同理心与极客精神的 AI 动态减脂顾问。你的核心任务是根据用户的食物图片/描述以及【疲劳度打分与模式】，给出顺应人性的下顿/下周补救方案。
 
-                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
-                    <span>🖼️ 从相册选择</span>
-                    <input type="file" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
-                </label>
-            </div>
+当前状态：
+- 疲劳度：${fatigueScore || 1}/5
+- 模式：${planMode || 'comfortable'}
 
-            <button onclick="analyze()" class="w-full bg-lime-400 text-zinc-950 font-bold py-3 rounded-lg text-sm hover:bg-lime-300 transition shadow-lg shadow-lime-950/30">
-                生成动态调整方案 ↗
-            </button>
-        </div>
+逻辑规则：
+1. 疲劳度 1-3分 / 严格或舒适模式：评估热量缺口与三大营养素，给出易执行的补救方案。
+2. 疲劳度 4-5分 / 心理保护模式：绝对禁止下调热量或推荐纯水煮菜，必须推荐符合重口/酸辣/高蛋白的低卡放纵餐（如香辣魔芋爽、高蛋白麻辣豆腐、奥尔良烤鸡翅配无糖可乐），运动清零。
 
-        <!-- AI 输出结果框 -->
-        <div id="result" class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm leading-relaxed min-h-[120px] text-zinc-300 whitespace-pre-wrap">
-            等待提交分析...
-        </div>
-    </div>
+请严格返回 Markdown 格式：
+### 热量与营养成分估算
+### 核心评估
+### 动态补救方案`;
 
-    <!-- 问卷 Modal 弹窗 -->
-    <div id="surveyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 space-y-5">
-            <h2 class="text-lg font-bold text-zinc-100 flex items-center justify-between">
-                <span>📋 状态与意愿测评</span>
-                <span class="text-xs text-zinc-500 font-normal">动态计划适配</span>
-            </h2>
+  try {
+    const apiMessages = [{ role: 'system', content: systemPrompt }];
+    if (imageBase64) {
+      apiMessages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: messages?.[0]?.content || '分析图片中的食物' },
+          { type: 'image_url', image_url: { url: imageBase64 } }
+        ]
+      });
+    } else if (messages && messages.length > 0) {
+      apiMessages.push(...messages);
+    }
 
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-zinc-300">1. 你近期的身体/精力疲劳度？</label>
-                <select id="surveyFatigue" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none">
-                    <option value="1">1分 - 精力充沛，状态打满</option>
-                    <option value="2">2分 - 状态不错，可以正常自律</option>
-                    <option value="3">3分 - 感觉平淡，偶尔想偷懒</option>
-                    <option value="4">4分 - 非常疲惫，加班/高压</option>
-                    <option value="5">5分 - 处于崩溃边缘，极度想暴饮暴食</option>
-                </select>
-            </div>
+    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (trimmedKey || process.env.DOUBAO_API_KEY)
+      },
+      body: JSON.stringify({
+        model: 'ep-20260318042159-44mqt',
+        max_tokens: 600,
+        messages: apiMessages
+      })
+    });
 
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-zinc-300">2. 期望的减脂模式？</label>
-                <select id="surveyMode" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none">
-                    <option value="strict">严格模式 (高效率缺口，高耐受)</option>
-                    <option value="comfortable">舒适减脂模式 (美味与温和缺口兼顾)</option>
-                    <option value="relax">心理保护模式 (允许放纵餐，运动清零)</option>
-                </select>
-            </div>
+    const data = await response.json();
+    if (data.error) return res.status(400).json({ error: data.error.message || 'Data error' });
 
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-zinc-300">3. 阶段性反馈/复盘（若为每周复盘）：</label>
-                <select id="surveyFeeling" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none">
-                    <option value="normal">建档评估 / 状态平稳</option>
-                    <option value="too_hard">太痛苦了坚持不下去了（自动切入心理保护）</option>
-                    <option value="too_easy">毫无压力，可以继续加大力度</option>
-                </select>
-            </div>
+    const text = data.choices?.[0]?.message?.content || '没有拿到回复。';
+    return res.status(200).json({ text });
 
-            <div class="pt-2 flex gap-3">
-                <button onclick="saveSurvey()" class="flex-1 bg-lime-400 text-zinc-950 font-bold py-2.5 rounded-lg text-xs hover:bg-lime-300 transition">
-                    保存并同步生成专属计划
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let currentBase64Image = '';
-
-        window.addEventListener('DOMContentLoaded', () => {
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
             initSurveyState();
             setupPasteListener();
         });
