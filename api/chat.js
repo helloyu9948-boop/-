@@ -1,53 +1,259 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吃了么 - 极客减脂系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-2xl mx-auto space-y-6">
+        <!-- 头部 -->
+        <header class="flex justify-between items-center border-b border-zinc-800 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white">吃了么.</h1>
+                <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统</p>
+            </div>
+            <button onclick="openSurveyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
+                📋 重新评估问卷
+            </button>
+        </header>
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+        <!-- 当前画像状态栏 -->
+        <div id="profileBanner" class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 text-xs flex justify-between items-center">
+            <div>
+                <span class="text-zinc-400">当前模式：</span>
+                <span id="planLabel" class="font-bold text-lime-400">检测中...</span>
+                <span class="text-zinc-500 mx-2">|</span>
+                <span class="text-zinc-400">疲劳指数：</span>
+                <span id="fatigueLabel" class="font-bold text-amber-400">1/5</span>
+            </div>
+            <span id="nextSurveyTip" class="text-zinc-500">周期：第 1 天</span>
+        </div>
 
-  const { messages, apiKey, fatigueScore } = req.body;
-  if (!apiKey) return res.status(400).json({ error: 'Missing API Key' });
+        <!-- 输入与图片上传核心区 -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+            <div class="space-y-2">
+                <label class="block text-xs font-medium text-zinc-400">记录饮食 / 粘贴截图 (Ctrl+V) / 拍照</label>
+                
+                <textarea id="userInput" placeholder="PC端直接按 Ctrl+V 粘贴截图，或直接输入文字描述..." class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
+                
+                <!-- 图片预览区 -->
+                <div id="imagePreviewContainer" class="hidden flex items-center gap-3 bg-zinc-950 p-2 rounded-lg border border-zinc-800">
+                    <img id="imagePreview" class="h-16 w-16 object-cover rounded border border-zinc-700" src="" alt="Preview">
+                    <div class="flex-1 text-xs text-zinc-400 truncate">
+                        <span id="imageName">已挂载图片</span>
+                        <p class="text-zinc-600">已自动转换准备提交给 AI</p>
+                    </div>
+                    <button onclick="removeImage()" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1">清除</button>
+                </div>
+            </div>
 
-  const cleanKey = apiKey.trim();
+            <!-- 操作按钮：PC/手机双端适配 -->
+            <div class="flex gap-2">
+                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
+                    <span>📷 手机直接拍照</span>
+                    <input type="file" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="hidden">
+                </label>
 
-  const systemPrompt = `你是一个兼具同理心与极客精神的 AI 动态减脂顾问。你的核心任务是根据用户的食物图片/描述以及【疲劳度打分】，给出顺应人性的下顿/下周补救方案。
+                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
+                    <span>🖼️ 从相册选择</span>
+                    <input type="file" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
+                </label>
+            </div>
 
-用户当前疲劳度为：${fatigueScore || 1}/5（1-3分为正常状态，4-5分为极度疲劳/状态低谷）。
+            <button onclick="analyze()" class="w-full bg-lime-400 text-zinc-950 font-bold py-3 rounded-lg text-sm hover:bg-lime-300 transition shadow-lg shadow-lime-950/30">
+                生成动态调整方案 ↗
+            </button>
+        </div>
 
-逻辑规则：
-1. 若疲劳度处于 1-3 分：按标准评估热量缺口与三大营养素，给出极简、易执行的补救餐建议。
-2. 若疲劳度处于 4-5 分：触发【心理保护机制】！绝对禁止下调热量或推荐清淡水煮菜。必须推荐符合用户口风（重口/酸辣/高蛋白）的低卡放纵餐（如香辣魔芋爽、高蛋白麻辣豆腐、奥尔良烤鸡翅配无糖可乐），并明确告知用户：“今天允许放松，运动计划自动清零”。
+        <!-- AI 输出结果框 -->
+        <div id="result" class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm leading-relaxed min-h-[120px] text-zinc-300 whitespace-pre-wrap">
+            等待提交分析...
+        </div>
+    </div>
 
-请严格返回以下 Markdown 格式：
-### 热量与营养成分估算
-### 核心评估
-### 动态补救方案（含疲劳度调节）`;
+    <!-- 问卷 Modal 弹窗 -->
+    <div id="surveyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 space-y-5">
+            <h2 class="text-lg font-bold text-zinc-100 flex items-center justify-between">
+                <span>📋 状态与意愿测评</span>
+                <span class="text-xs text-zinc-500 font-normal">动态计划适配</span>
+            </h2>
 
-  try {
-    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + cleanKey
-      },
-      body: JSON.stringify({
-        model: 'ep-20260318042159-44mqt',
-        max_tokens: 500,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...(messages || [])
-        ]
-      })
-    });
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-zinc-300">1. 你近期的身体/精力疲劳度？</label>
+                <select id="surveyFatigue" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none">
+                    <option value="1">1分 - 精力充沛，状态打满</option>
+                    <option value="2">2分 - 状态不错，可以正常自律</option>
+                    <option value="3">3分 - 感觉平淡，偶尔想偷懒</option>
+                    <option value="4">4分 - 非常疲惫，加班/高压</option>
+                    <option value="5">5分 - 处于崩溃边缘，极度想暴饮暴食</option>
+                </select>
+            </div>
 
-    const data = await response.json();
-    if (data.error) return res.status(400).json({ error: data.error.message || 'Data error' });
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-zinc-300">2. 期望的减脂模式？</label>
+                <select id="surveyMode" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none">
+                    <option value="strict">严格模式 (高效率缺口，高耐受)</option>
+                    <option value="comfortable">舒适减脂模式 (美味与温和缺口兼顾)</option>
+                    <option value="relax">心理保护模式 (允许放纵餐，运动清零)</option>
+                </select>
+            </div>
 
-    const text = data.choices?.[0]?.message?.content || '没有得到回复。';
-    return res.status(200).json({ text });
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-zinc-300">3. 阶段性反馈/复盘（若为每周复盘）：</label>
+                <select id="surveyFeeling" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none">
+                    <option value="normal">建档评估 / 状态平稳</option>
+                    <option value="too_hard">太痛苦了坚持不下去了（自动切入心理保护）</option>
+                    <option value="too_easy">毫无压力，可以继续加大力度</option>
+                </select>
+            </div>
 
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
-}
+            <div class="pt-2 flex gap-3">
+                <button onclick="saveSurvey()" class="flex-1 bg-lime-400 text-zinc-950 font-bold py-2.5 rounded-lg text-xs hover:bg-lime-300 transition">
+                    保存并同步生成专属计划
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentBase64Image = '';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initSurveyState();
+            setupPasteListener();
+        });
+
+        // 1. PC 粘贴 (Ctrl+V) 监听
+        function setupPasteListener() {
+            const textarea = document.getElementById('userInput');
+            textarea.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let item of items) {
+                    if (item.type.indexOf('image') === 0) {
+                        e.preventDefault();
+                        const blob = item.getAsFile();
+                        processImageFile(blob);
+                        break;
+                    }
+                }
+            });
+        }
+
+        // 2. 手机拍照与选择图片
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) processImageFile(file);
+        }
+
+        function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentBase64Image = e.target.result;
+                document.getElementById('imagePreview').src = currentBase64Image;
+                document.getElementById('imageName').innerText = file.name || '已捕获图片';
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            currentBase64Image = '';
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+        }
+
+        // 3. 问卷与 7 天复盘机制
+        function initSurveyState() {
+            const profileRaw = localStorage.getItem('user_plan_profile');
+            if (!profileRaw) {
+                openSurveyModal();
+            } else {
+                const profile = JSON.parse(profileRaw);
+                const now = Date.now();
+                const daysPassed = Math.floor((now - (profile.updatedAt || now)) / (1000 * 60 * 60 * 24));
+                
+                updateProfileUI(profile, daysPassed);
+                if (daysPassed >= 7) {
+                    setTimeout(() => {
+                        alert('已坚持 7 天！建议重新提交感受问卷，AI 将为你重新对齐下周食谱。');
+                        openSurveyModal();
+                    }, 500);
+                }
+            }
+        }
+
+        function openSurveyModal() {
+            document.getElementById('surveyModal').classList.remove('hidden');
+        }
+
+        function saveSurvey() {
+            const fatigue = parseInt(document.getElementById('surveyFatigue').value);
+            let mode = document.getElementById('surveyMode').value;
+            const feeling = document.getElementById('surveyFeeling').value;
+
+            if (feeling === 'too_hard') {
+                mode = 'relax';
+            }
+
+            const profile = {
+                fatigue: fatigue,
+                mode: mode,
+                feeling: feeling,
+                updatedAt: Date.now()
+            };
+
+            localStorage.setItem('user_plan_profile', JSON.stringify(profile));
+            document.getElementById('surveyModal').classList.add('hidden');
+            updateProfileUI(profile, 0);
+        }
+
+        function updateProfileUI(profile, daysPassed) {
+            const modeNames = {
+                'strict': '严格高效 ⚡',
+                'comfortable': '舒适可持续 🥗',
+                'relax': '心理保护/放纵 🛡️'
+            };
+            document.getElementById('planLabel').innerText = modeNames[profile.mode] || profile.mode;
+            document.getElementById('fatigueLabel').innerText = profile.fatigue + '/5';
+            document.getElementById('nextSurveyTip').innerText = `已坚持 ${daysPassed} 天 (7天周期复盘)`;
+        }
+
+        // 4. 发送给后台 API
+        async function analyze() {
+            const input = document.getElementById('userInput').value;
+            const resBox = document.getElementById('result');
+            const apiKey = localStorage.getItem('doubao_key') || '';
+            const profile = JSON.parse(localStorage.getItem('user_plan_profile') || '{"fatigue":1,"mode":"comfortable"}');
+
+            if (!input && !currentBase64Image) {
+                return alert('请先描述饮食或上传/粘贴截图/拍照');
+            }
+
+            resBox.innerText = 'AI 正在根据你的问卷状态算缺口与饮食方案...';
+
+            try {
+                const res = await fetch('/api', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        fatigueScore: profile.fatigue,
+                        planMode: profile.mode,
+                        imageBase64: currentBase64Image,
+                        messages: [{ 
+                            role: 'user', 
+                            content: `[用户当前减脂模式: ${profile.mode}, 疲劳度: ${profile.fatigue}/5]\n描述: ${input}` 
+                        }]
+                    })
+                });
+                const data = await res.json();
+                resBox.innerText = data.text || data.error || '解析失败';
+            } catch (e) {
+                resBox.innerText = '请求失败：' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
