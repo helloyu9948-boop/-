@@ -271,7 +271,8 @@
             resBox.innerText = 'AI 正在分析食物并根据你的状态计算方案...';
 
             try {
-                const res = await fetch('/api', {
+                // 指向你的真实后端地址 /api/chat
+                const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -304,7 +305,5 @@
             }
         }
     </script>
-</body>
-</html>
 </body>
 </html>
