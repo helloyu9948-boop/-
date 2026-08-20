@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>吃了么 - 减脂系统</title>
+    <title>吃了么 - 极客减脂系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen p-4 md:p-8">
     <div class="max-w-2xl mx-auto space-y-6">
-        <!-- 头部 -->
         <header class="flex justify-between items-center border-b border-zinc-800 pb-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-white">吃了么.</h1>
@@ -19,7 +18,6 @@
             </button>
         </header>
 
-        <!-- 当前画像状态栏 -->
         <div id="profileBanner" class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 text-xs flex justify-between items-center">
             <div>
                 <span class="text-zinc-400">当前模式：</span>
@@ -31,25 +29,22 @@
             <span id="nextSurveyTip" class="text-zinc-500">周期：第 1 天</span>
         </div>
 
-        <!-- 输入与图片上传核心区 -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
             <div class="space-y-2">
                 <label class="block text-xs font-medium text-zinc-400">记录饮食 / 粘贴截图 (Ctrl+V) / 拍照</label>
                 
                 <textarea id="userInput" placeholder="PC端直接按 Ctrl+V 粘贴截图，或直接输入文字描述..." class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
                 
-                <!-- 图片预览区 -->
                 <div id="imagePreviewContainer" class="hidden flex items-center gap-3 bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                     <img id="imagePreview" class="h-16 w-16 object-cover rounded border border-zinc-700" src="" alt="Preview">
                     <div class="flex-1 text-xs text-zinc-400 truncate">
                         <span id="imageName">已挂载图片</span>
-                        <p class="text-zinc-600">已自动转换准备提交给 AI</p>
+                        <p class="text-lime-400/80 text-[10px]">已自动本地高质量压缩</p>
                     </div>
                     <button onclick="removeImage()" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1">清除</button>
                 </div>
             </div>
 
-            <!-- 操作按钮：PC/手机双端适配 -->
             <div class="flex gap-2">
                 <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
                     <span>📷 手机直接拍照</span>
@@ -67,13 +62,11 @@
             </button>
         </div>
 
-        <!-- AI 输出结果框 -->
         <div id="result" class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm leading-relaxed min-h-[120px] text-zinc-300 whitespace-pre-wrap">
             等待提交分析...
         </div>
     </div>
 
-    <!-- 问卷 Modal 弹窗 -->
     <div id="surveyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 space-y-5">
             <h2 class="text-lg font-bold text-zinc-100 flex items-center justify-between">
@@ -126,7 +119,6 @@
             setupPasteListener();
         });
 
-        // PC 粘贴 (Ctrl+V) 监听
         function setupPasteListener() {
             const textarea = document.getElementById('userInput');
             textarea.addEventListener('paste', (e) => {
@@ -142,19 +134,40 @@
             });
         }
 
-        // 手机拍照与选择图片
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) processImageFile(file);
         }
 
+        // Canvas 图片压缩逻辑：最大边限制 800px，质量 0.6
         function processImageFile(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                currentBase64Image = e.target.result;
-                document.getElementById('imagePreview').src = currentBase64Image;
-                document.getElementById('imageName').innerText = file.name || '已捕获图片';
-                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 800;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    currentBase64Image = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('imagePreview').src = currentBase64Image;
+                    document.getElementById('imageName').innerText = file.name || '图片已压缩';
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -164,7 +177,6 @@
             document.getElementById('imagePreviewContainer').classList.add('hidden');
         }
 
-        // 问卷与 7 天复盘机制
         function initSurveyState() {
             const profileRaw = localStorage.getItem('user_plan_profile');
             if (!profileRaw) {
@@ -220,7 +232,6 @@
             document.getElementById('nextSurveyTip').innerText = `已坚持 ${daysPassed} 天 (7天周期复盘)`;
         }
 
-        // 发送给后台 API
         async function analyze() {
             const input = document.getElementById('userInput').value;
             const resBox = document.getElementById('result');
@@ -231,7 +242,7 @@
                 return alert('请先描述饮食或上传/粘贴截图/拍照');
             }
 
-            resBox.innerText = 'AI 正在根据你的问卷状态算缺口与饮食方案...';
+            resBox.innerText = 'AI 正在分析食物并根据你的状态计算方案...';
 
             try {
                 const res = await fetch('/api', {
@@ -248,7 +259,15 @@
                         }]
                     })
                 });
-                const data = await res.json();
+
+                const rawText = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch(e) {
+                    return resBox.innerText = '后端服务返回异常（可能需要检查 api/index.js 代码）。错误响应：\n' + rawText.slice(0, 150);
+                }
+
                 resBox.innerText = data.text || data.error || '解析失败';
             } catch (e) {
                 resBox.innerText = '请求失败：' + e.message;
