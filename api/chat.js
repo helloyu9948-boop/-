@@ -1,63 +1,79 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { messages, apiKey, fatigueScore, planMode, imageBase64 } = req.body || {};
-  const trimmedKey = (apiKey || '').trim();
-
-  const systemPrompt = `你是一个兼具同理心与极客精神的 AI 动态减脂顾问。你的核心任务是根据用户的食物图片/描述以及【疲劳度打分与模式】，给出顺应人性的下顿/下周补救方案。
-
-当前状态：
-- 疲劳度：${fatigueScore || 1}/5
-- 模式：${planMode || 'comfortable'}
-
-逻辑规则：
-1. 疲劳度 1-3分 / 严格或舒适模式：评估热量缺口与三大营养素，给出易执行的补救方案。
-2. 疲劳度 4-5分 / 心理保护模式：绝对禁止下调热量或推荐纯水煮菜，必须推荐符合重口/酸辣/高蛋白的低卡放纵餐（如香辣魔芋爽、高蛋白麻辣豆腐、奥尔良烤鸡翅配无糖可乐），运动清零。
-
-请严格返回 Markdown 格式：
-### 热量与营养成分估算
-### 核心评估
-### 动态补救方案`;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   try {
-    const apiMessages = [{ role: 'system', content: systemPrompt }];
-    if (imageBase64) {
-      apiMessages.push({
-        role: 'user',
-        content: [
-          { type: 'text', text: messages?.[0]?.content || '分析图片中的食物' },
-          { type: 'image_url', image_url: { url: imageBase64 } }
-        ]
-      });
-    } else if (messages && messages.length > 0) {
-      apiMessages.push(...messages);
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    const { apiKey, fatigueScore, planMode, imageBase64, messages } = body;
+
+    const userApiKey = apiKey || process.env.DOUBAO_API_KEY;
+
+    if (!userApiKey) {
+      return res.status(200).json({ error: '未找到 API Key，请检查配置或输入框。' });
+    }
+
+    const systemPrompt = `你是一个专业的动态减脂与心理保护助手。
+用户当前减脂模式: ${planMode || 'comfortable'} (strict/comfortable/relax)
+用户当前疲劳度: ${fatigueScore || 1}/5
+
+请根据用户的饮食描述或识别图片中的餐食内容，按如下逻辑回答：
+1. 估算所含热量及三大营养素比例。
+2. 结合用户的【减脂模式】和【疲劳度】给出调整建议。如果疲劳度>=4或处于relax模式，必须优先提供心理抚慰与高容错策略，禁止过度苛责。
+3. 输出格式清晰干净，语言简洁专业，语气松弛专注。`;
+
+    let formattedMessages = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (messages && messages.length > 0) {
+      const userMsg = messages[messages.length - 1];
+      const textContent = userMsg.content || '';
+
+      if (imageBase64) {
+        formattedMessages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: textContent },
+            {
+              type: 'image_url',
+              image_url: { url: imageBase64 }
+            }
+          ]
+        });
+      } else {
+        formattedMessages.push({
+          role: 'user',
+          content: textContent
+        });
+      }
     }
 
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + (trimmedKey || process.env.DOUBAO_API_KEY)
+        'Authorization': `Bearer ${userApiKey}`
       },
       body: JSON.stringify({
         model: 'ep-20260318042159-44mqt',
-        max_tokens: 600,
-        messages: apiMessages
+        messages: formattedMessages,
+        temperature: 0.7
       })
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(200).json({ 
+        error: `火山方舟 API 返回错误 (${response.status})。若带图报错，请确认火山后台【ep-20260318042159-44mqt】接入点是否为多模态/视觉识别模型 (Doubao Vision)。错误详情：${errorText}` 
+      });
+    }
+
     const data = await response.json();
-    if (data.error) return res.status(400).json({ error: data.error.message || 'Data error' });
+    const reply = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '模型未返回有效文本';
 
-    const text = data.choices?.[0]?.message?.content || '没有拿到回复。';
-    return res.status(200).json({ text });
-
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(200).json({ text: reply });
+  } catch (err) {
+    return res.status(200).json({ error: '后端运行异常: ' + err.message });
   }
 }
