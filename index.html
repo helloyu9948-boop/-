@@ -31,15 +31,15 @@
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
             <div class="space-y-2">
-                <label class="block text-xs font-medium text-zinc-400">记录饮食 / 粘贴截图 (Ctrl+V) / 拍照</label>
+                <label class="block text-xs font-medium text-zinc-400">记录饮食 / 全局粘贴截图 (Ctrl+V) / 拍照上传</label>
                 
-                <textarea id="userInput" placeholder="PC端直接按 Ctrl+V 粘贴截图，或直接输入文字描述..." class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
+                <textarea id="userInput" placeholder="页面任意位置按 Ctrl+V 可直接粘贴截图，或直接输入文字描述..." class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
                 
                 <div id="imagePreviewContainer" class="hidden flex items-center gap-3 bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                     <img id="imagePreview" class="h-16 w-16 object-cover rounded border border-zinc-700" src="" alt="Preview">
                     <div class="flex-1 text-xs text-zinc-400 truncate">
                         <span id="imageName">已挂载图片</span>
-                        <p class="text-lime-400/80 text-[10px]">已自动本地高质量压缩</p>
+                        <p id="imageSubText" class="text-lime-400/80 text-[10px]">已自动本地高质量压缩</p>
                     </div>
                     <button onclick="removeImage()" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1">清除</button>
                 </div>
@@ -116,18 +116,18 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initSurveyState();
-            setupPasteListener();
+            setupGlobalPasteListener();
         });
 
-        function setupPasteListener() {
-            const textarea = document.getElementById('userInput');
-            textarea.addEventListener('paste', (e) => {
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        function setupGlobalPasteListener() {
+            document.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData))?.items;
+                if (!items) return;
                 for (let item of items) {
-                    if (item.type.indexOf('image') === 0) {
+                    if (item.type && item.type.indexOf('image') === 0) {
                         e.preventDefault();
                         const blob = item.getAsFile();
-                        processImageFile(blob);
+                        if (blob) processImageFile(blob);
                         break;
                     }
                 }
@@ -135,37 +135,63 @@
         }
 
         function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) processImageFile(file);
+            const file = event.target.files && event.target.files[0];
+            if (file) {
+                processImageFile(file);
+                event.target.value = '';
+            }
         }
 
-        // Canvas 图片压缩逻辑：最大边限制 800px，质量 0.6
         function processImageFile(file) {
+            const nameLabel = document.getElementById('imageName');
+            const subText = document.getElementById('imageSubText');
+            const previewBox = document.getElementById('imagePreviewContainer');
+            const previewImg = document.getElementById('imagePreview');
+
+            if (nameLabel) nameLabel.innerText = '正在本地处理图片...';
+            if (subText) subText.innerText = '压缩处理中...';
+            if (previewBox) previewBox.classList.remove('hidden');
+
             const reader = new FileReader();
+            reader.onerror = function() {
+                alert('读取图片失败，请重试');
+                removeImage();
+            };
             reader.onload = function(e) {
                 const img = new Image();
+                img.onerror = function() {
+                    alert('图片加载失败，请确保格式为 JPG/PNG/WEBP');
+                    removeImage();
+                };
                 img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 800;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round((height * maxDim) / width);
-                            width = maxDim;
-                        } else {
-                            width = Math.round((width * maxDim) / height);
-                            height = maxDim;
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 800;
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
                         }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        currentBase64Image = canvas.toDataURL('image/jpeg', 0.5);
+                        if (previewImg) previewImg.src = currentBase64Image;
+                        if (nameLabel) nameLabel.innerText = file.name || '粘贴图片';
+                        if (subText) subText.innerText = '已自动高质量压缩 (~50KB)';
+                    } catch (err) {
+                        currentBase64Image = e.target.result;
+                        if (previewImg) previewImg.src = currentBase64Image;
+                        if (nameLabel) nameLabel.innerText = file.name || '挂载成功';
+                        if (subText) subText.innerText = '未压缩版本';
                     }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    currentBase64Image = canvas.toDataURL('image/jpeg', 0.6);
-                    document.getElementById('imagePreview').src = currentBase64Image;
-                    document.getElementById('imageName').innerText = file.name || '图片已压缩';
-                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
                 };
                 img.src = e.target.result;
             };
@@ -238,8 +264,8 @@
             const apiKey = localStorage.getItem('doubao_key') || '';
             const profile = JSON.parse(localStorage.getItem('user_plan_profile') || '{"fatigue":1,"mode":"comfortable"}');
 
-            if (!input && !currentBase64Image) {
-                return alert('请先描述饮食或上传/粘贴截图/拍照');
+            if (!input.trim() && !currentBase64Image) {
+                return alert('请先描述饮食，或上传/粘贴截图/拍照');
             }
 
             resBox.innerText = 'AI 正在分析食物并根据你的状态计算方案...';
@@ -252,7 +278,7 @@
                         apiKey: apiKey,
                         fatigueScore: profile.fatigue,
                         planMode: profile.mode,
-                        imageBase64: currentBase64Image,
+                        imageBase64: currentBase64Image || null,
                         messages: [{ 
                             role: 'user', 
                             content: `[用户当前减脂模式: ${profile.mode}, 疲劳度: ${profile.fatigue}/5]\n描述: ${input}` 
@@ -265,14 +291,20 @@
                 try {
                     data = JSON.parse(rawText);
                 } catch(e) {
-                    return resBox.innerText = '后端服务返回异常（可能需要检查 api/index.js 代码）。错误响应：\n' + rawText.slice(0, 150);
+                    return resBox.innerText = '后端服务返回非 JSON 格式：\n' + rawText.slice(0, 200);
                 }
 
-                resBox.innerText = data.text || data.error || '解析失败';
+                if (data.error) {
+                    resBox.innerText = '❌ 报错拦截：\n' + data.error;
+                } else {
+                    resBox.innerText = data.text || '解析成功，无文本返回';
+                }
             } catch (e) {
                 resBox.innerText = '请求失败：' + e.message;
             }
         }
     </script>
+</body>
+</html>
 </body>
 </html>
