@@ -17,7 +17,7 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> 未连接 API
                     </span>
                 </div>
-                <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统 V2.0 (98kg基准引擎)</p>
+                <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统 V3.0 (98kg专属定制)</p>
             </div>
             <div class="flex gap-2">
                 <button onclick="openKeyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
@@ -63,27 +63,30 @@
             </div>
         </div>
 
-        <!-- 主操作区 -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
-            <!-- 一键生成菜谱主按钮 -->
-            <button onclick="generateRecipe()" class="w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-zinc-950 font-black py-3.5 rounded-lg text-sm hover:opacity-90 transition shadow-lg shadow-lime-950/40 flex items-center justify-center gap-2">
-                <span>💡 按今日营养缺口一键生成推荐菜谱</span>
-            </button>
-
-            <div class="relative flex py-1 items-center">
-                <div class="flex-grow border-t border-zinc-800"></div>
-                <span class="flex-shrink mx-3 text-[10px] text-zinc-500 font-semibold">或 记录/评估已吃食物</span>
-                <div class="flex-grow border-t border-zinc-800"></div>
+        <!-- 核心功能区 1: 推荐菜谱生成器 -->
+        <div class="bg-gradient-to-r from-lime-950/40 via-zinc-900 to-zinc-900 border border-lime-500/30 rounded-xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xs font-bold text-lime-400 flex items-center gap-1.5">
+                    <span>🍱 AI 智能菜谱推荐</span>
+                </h2>
+                <span class="text-[10px] text-zinc-500">基于今日缺口自动计算</span>
             </div>
+            <button onclick="generateRecipe()" class="w-full bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black py-3 rounded-lg text-sm transition shadow-lg shadow-lime-950/50 flex items-center justify-center gap-2">
+                <span>💡 一键计算并推荐今日定制菜谱 (三大营养素配比)</span>
+            </button>
+        </div>
 
+        <!-- 核心功能区 2: 已吃饮食记录与分析 -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <h2 class="text-xs font-bold text-zinc-300">📸 记录已吃食物 (上传照片/打字)</h2>
             <div class="space-y-2">
-                <textarea id="userInput" placeholder="页面任意位置按 Ctrl+V 可直接粘贴截图，或直接输入文字描述..." class="w-full h-24 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
+                <textarea id="userInput" placeholder="页面任意位置按 Ctrl+V 粘贴截图，或输入已吃食物描述..." class="w-full h-20 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
                 
                 <div id="imagePreviewContainer" class="hidden flex items-center gap-3 bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                     <img id="imagePreview" class="h-16 w-16 object-cover rounded border border-zinc-700" src="" alt="Preview">
                     <div class="flex-1 text-xs text-zinc-400 truncate">
                         <span id="imageName">已挂载图片</span>
-                        <p id="imageSubText" class="text-lime-400/80 text-[10px]">已自动本地高质量压缩</p>
+                        <p id="imageSubText" class="text-lime-400/80 text-[10px]">已自动本地压缩</p>
                     </div>
                     <button onclick="removeImage()" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1">清除</button>
                 </div>
@@ -101,24 +104,22 @@
             </div>
 
             <button onclick="analyze()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2.5 rounded-lg text-xs border border-zinc-700 transition">
-                分析已吃食物并打卡 ↗
+                分析已吃食物并记入日志 ↗
             </button>
         </div>
 
-        <!-- 最新分析结果 / 推荐食谱 -->
+        <!-- 输出显示区 -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-2">
-            <h3 class="text-xs font-bold text-zinc-400 flex items-center gap-1">
-                <span>🤖 AI 智能响应反馈</span>
-            </h3>
-            <div id="result" class="text-sm leading-relaxed min-h-[80px] text-zinc-300 whitespace-pre-wrap font-sans">
-                点击上方【一键生成推荐菜谱】或提交食物进行打卡...
+            <h3 class="text-xs font-bold text-zinc-400">🤖 AI 分析与建议</h3>
+            <div id="result" class="text-sm leading-relaxed min-h-[60px] text-zinc-300 whitespace-pre-wrap">
+                点击【一键计算并推荐今日定制菜谱】或提交已吃食物...
             </div>
         </div>
 
         <!-- 本地历史日志流 -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                <h2 class="text-xs font-bold text-zinc-300">📅 今日打卡记录日志 (含图片凭证)</h2>
+                <h2 class="text-xs font-bold text-zinc-300">📅 今日打卡记录日志 (含照片凭证)</h2>
                 <button onclick="clearTodayLogs()" class="text-[10px] text-zinc-500 hover:text-rose-400 transition">清空今日数据</button>
             </div>
             <div id="logsContainer" class="space-y-2 text-xs text-zinc-400 max-h-80 overflow-y-auto">
@@ -131,7 +132,7 @@
     <div id="keyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 space-y-4">
             <h2 class="text-lg font-bold text-zinc-100">🔑 配置 API Key</h2>
-            <p class="text-xs text-zinc-400">优先使用此处的 Key，若留空则自动回退至 Vercel 后台环境变量：</p>
+            <p class="text-xs text-zinc-400">优先使用此处的 Key，若留空则使用后台环境变量：</p>
             <input id="keyInput" type="password" placeholder="输入火山方舟 API Key..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs text-zinc-100 focus:outline-none focus:border-lime-400">
             <div class="flex gap-2">
                 <button onclick="saveKey()" class="flex-1 bg-lime-400 text-zinc-950 font-bold py-2 rounded-lg text-xs hover:bg-lime-300 transition">保存配置</button>
@@ -214,11 +215,8 @@
 
         function saveKey() {
             const val = document.getElementById('keyInput').value.trim();
-            if (val) {
-                localStorage.setItem('doubao_key', val);
-            } else {
-                localStorage.removeItem('doubao_key');
-            }
+            if (val) localStorage.setItem('doubao_key', val);
+            else localStorage.removeItem('doubao_key');
             checkApiStatus();
             closeKeyModal();
         }
@@ -287,8 +285,7 @@
             if (!profileRaw) {
                 openSurveyModal();
             } else {
-                const profile = JSON.parse(profileRaw);
-                updateProfileUI(profile);
+                updateProfileUI(JSON.parse(profileRaw));
             }
         }
 
@@ -324,10 +321,10 @@
             const logs = JSON.parse(localStorage.getItem(getTodayKey()) || '[]');
             let tCal = 0, tPro = 0, tCarb = 0, tFat = 0;
             logs.forEach(log => {
-                tCal += log.calories || 0;
-                tPro += log.protein || 0;
-                tCarb += log.carbs || 0;
-                tFat += log.fat || 0;
+                tCal += Number(log.calories) || 0;
+                tPro += Number(log.protein) || 0;
+                tCarb += Number(log.carbs) || 0;
+                tFat += Number(log.fat) || 0;
             });
             return { tCal, tPro, tCarb, tFat, logs };
         }
@@ -380,24 +377,34 @@
             }
         }
 
-        // 核心一键生成推荐食谱
+        // 强效剔除代码块/乱码的清洗函数
+        function sanitizeText(str) {
+            if (!str) return '';
+            return str
+                .replace(/```json[\s\S]*?```/gi, '')
+                .replace(/```[\s\S]*?```/gi, '')
+                .replace(/\{"summary"[\s\S]*?\}/gi, '')
+                .trim();
+        }
+
+        // 功能 1：一键生成推荐菜谱
         async function generateRecipe() {
             const resBox = document.getElementById('result');
             const apiKey = localStorage.getItem('doubao_key') || '';
             const profile = JSON.parse(localStorage.getItem('user_plan_profile') || '{"fatigue":1,"mode":"comfortable"}');
             const { tCal, tPro, tCarb, tFat } = getTodayTotals();
 
-            resBox.innerText = '正在基于 173cm/98kg 硬件基准与今日剩余缺口计算推荐食谱...';
+            resBox.innerText = '🤖 正在基于 173cm / 98kg 硬件参数与今日摄入缺口计算菜谱...';
 
-            const promptText = `你是我这个25岁/173cm/98kg大体重减脂极客的专属智囊。
-用户当前硬件参数：身高173cm，体重98kg（大体重减脂期），疲劳度：${profile.fatigue}/5，当前模式：${profile.mode}。
-今日已摄入数据：热量 ${tCal} kcal，蛋白质 ${tPro} g，碳水 ${tCarb} g，脂肪 ${tFat} g。
+            const promptText = `你是25岁/173cm/98kg大体重极客的专属智囊。
+用户参数：身高173cm，体重98kg，疲劳指数：${profile.fatigue}/5，模式：${profile.mode}。
+今日已摄入：热量 ${tCal} kcal，蛋白质 ${tPro}g，碳水 ${tCarb}g，脂肪 ${tFat}g。
 
-请直接生成一份最科学、极简可落地的【今日三餐/补救推荐菜谱】，满足以下要求：
-1. 包含：早餐、午餐、晚餐（及必要加餐）。
-2. 每餐列明：推荐菜名、精准分量（克数）、预期蛋白质/碳水/脂肪及热量。
-3. 计算出全天汇总的三营养素比例目标（如 蛋白质:碳水:脂肪 = 4:4:2），并给出极简的烹饪/外卖实操避坑建议。
-4. 格式清晰严谨，禁止输出任何 ```json 代码块。`;
+请直接给出今日【精准搭配推荐菜谱】：
+1. 包含早餐、午餐、晚餐（或补救加餐）的具体食材与建议重量（克数）。
+2. 计算全天推荐的目标三大营养素配比（蛋白质:碳水:脂肪）。
+3. 给出极其干脆的外卖/烹饪避坑指南。
+4. 绝对禁止输出任何 JSON 数据块，直接输出高质量文字。`;
 
             try {
                 const res = await fetch('/api/chat', {
@@ -414,23 +421,20 @@
 
                 const rawText = await res.text();
                 let data;
-                try { data = JSON.parse(rawText); } catch(e) { return resBox.innerText = '后端非 JSON 输出：' + rawText; }
+                try { data = JSON.parse(rawText); } catch(e) { return resBox.innerText = '后端响应错误：' + rawText; }
 
                 if (data.error) {
                     resBox.innerText = '❌ 报错拦截：\n' + data.error;
                     if (data.error.includes('API Key')) openKeyModal();
                 } else {
-                    let reply = data.text || '';
-                    // 彻底清除隐藏代码块
-                    reply = reply.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').trim();
-                    resBox.innerText = reply;
+                    resBox.innerText = sanitizeText(data.text || '');
                 }
             } catch (e) {
                 resBox.innerText = '请求异常：' + e.message;
             }
         }
 
-        // 分析打卡
+        // 功能 2：分析打卡已吃食物
         async function analyze() {
             const input = document.getElementById('userInput').value;
             const resBox = document.getElementById('result');
@@ -439,10 +443,10 @@
             const imageToSave = currentBase64Image;
 
             if (!input.trim() && !imageToSave) {
-                return alert('请先输入文字描述或选择/粘贴截图');
+                return alert('请先输入已吃的食物描述，或上传/粘贴食物图片！\n若要生成菜谱，请点击上方【一键计算并推荐今日定制菜谱】按钮。');
             }
 
-            resBox.innerText = 'AI 正在计算热量与三大营养素数据...';
+            resBox.innerText = '🤖 AI 正在识别并估算热量...';
 
             try {
                 const res = await fetch('/api/chat', {
@@ -455,7 +459,7 @@
                         imageBase64: imageToSave || null,
                         messages: [{ 
                             role: 'user', 
-                            content: `用户状态[173cm/98kg, 模式:${profile.mode}, 疲劳:${profile.fatigue}/5]。评估输入: ${input}\n请严格包含以下JSON数据块供前端解析：\n\`\`\`json\n{"summary":"菜品简述","calories":数值,"protein":数值,"carbs":数值,"fat":数值}\n\`\`\`\n随后给出针对该状态的硬核调整建议（禁止把 JSON 展示给用户）。` 
+                            content: `评估输入: ${input}\n请严格包含以下JSON数据块供前端解析：\n\`\`\`json\n{"summary":"菜品简述","calories":数值,"protein":数值,"carbs":数值,"fat":数值}\n\`\`\`\n随后给出针对该食物的硬核评析。` 
                         }]
                     })
                 });
@@ -470,8 +474,8 @@
                 } else {
                     const reply = data.text || '';
                     
-                    // 解析 JSON 模块并记录日志
-                    const jsonMatch = reply.match(/```json\n([\s\S]*?)\n```/) || reply.match(/\{[\s\S]*?\}/);
+                    // 解析 JSON 模块并静默存入日志
+                    const jsonMatch = reply.match(/```json\n?([\s\S]*?)\n?```/) || reply.match(/\{[\s\S]*?\}/);
                     if (jsonMatch) {
                         try {
                             const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
@@ -489,9 +493,9 @@
                         } catch(err) { console.log('JSON 解析失败:', err); }
                     }
 
-                    // 彻底清除前端显示的 JSON 代码块，只留纯文本文字
-                    const cleanText = reply.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').trim();
-                    resBox.innerText = cleanText || '打卡成功！营养数据已自动同步至上方看板与今日日志。';
+                    // 彻底强洗显示文本，绝对不展示代码块
+                    const cleanAdvice = sanitizeText(reply);
+                    resBox.innerText = cleanAdvice || '✅ 打卡成功！摄入数据已自动存入下方日志。';
                 }
             } catch (e) {
                 resBox.innerText = '请求异常：' + e.message;
