@@ -17,7 +17,7 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> 未连接 API
                     </span>
                 </div>
-                <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统 V2.0</p>
+                <p class="text-zinc-400 text-xs mt-1">动态减脂与心理保护系统 V2.0 (98kg基准引擎)</p>
             </div>
             <div class="flex gap-2">
                 <button onclick="openKeyModal()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 transition">
@@ -39,13 +39,13 @@
                     <span class="text-zinc-400">疲劳指数：</span>
                     <span id="fatigueLabel" class="font-bold text-amber-400">1/5</span>
                 </div>
-                <span id="nextSurveyTip" class="text-zinc-500">周期：第 1 天</span>
+                <span id="nextSurveyTip" class="text-zinc-500">基准: 173cm / 98kg</span>
             </div>
             
             <!-- 今日营养看板 -->
             <div class="grid grid-cols-4 gap-2 text-center pt-1">
                 <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800/60">
-                    <div class="text-[10px] text-zinc-500">今日总热量</div>
+                    <div class="text-[10px] text-zinc-500">今日已摄入</div>
                     <div id="totalCalories" class="text-sm font-bold text-lime-400">0 kcal</div>
                 </div>
                 <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800/60">
@@ -63,11 +63,21 @@
             </div>
         </div>
 
-        <!-- 主输入区域 -->
+        <!-- 主操作区 -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+            <!-- 一键生成菜谱主按钮 -->
+            <button onclick="generateRecipe()" class="w-full bg-gradient-to-r from-lime-400 to-emerald-400 text-zinc-950 font-black py-3.5 rounded-lg text-sm hover:opacity-90 transition shadow-lg shadow-lime-950/40 flex items-center justify-center gap-2">
+                <span>💡 按今日营养缺口一键生成推荐菜谱</span>
+            </button>
+
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-zinc-800"></div>
+                <span class="flex-shrink mx-3 text-[10px] text-zinc-500 font-semibold">或 记录/评估已吃食物</span>
+                <div class="flex-grow border-t border-zinc-800"></div>
+            </div>
+
             <div class="space-y-2">
-                <label class="block text-xs font-medium text-zinc-400">记录饮食 / 全局粘贴截图 (Ctrl+V) / 拍照上传</label>
-                <textarea id="userInput" placeholder="页面任意位置按 Ctrl+V 可直接粘贴截图，或直接输入文字描述..." class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
+                <textarea id="userInput" placeholder="页面任意位置按 Ctrl+V 可直接粘贴截图，或直接输入文字描述..." class="w-full h-24 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-600 transition resize-none"></textarea>
                 
                 <div id="imagePreviewContainer" class="hidden flex items-center gap-3 bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                     <img id="imagePreview" class="h-16 w-16 object-cover rounded border border-zinc-700" src="" alt="Preview">
@@ -80,24 +90,29 @@
             </div>
 
             <div class="flex gap-2">
-                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
+                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2 rounded-lg flex items-center justify-center gap-1 transition">
                     <span>📷 手机拍照</span>
                     <input type="file" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="hidden">
                 </label>
-                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2.5 rounded-lg flex items-center justify-center gap-1 transition">
+                <label class="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs py-2 rounded-lg flex items-center justify-center gap-1 transition">
                     <span>🖼️ 相册选择</span>
                     <input type="file" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
                 </label>
             </div>
 
-            <button onclick="analyze()" class="w-full bg-lime-400 text-zinc-950 font-bold py-3 rounded-lg text-sm hover:bg-lime-300 transition shadow-lg shadow-lime-950/30">
-                生成动态调整方案 ↗
+            <button onclick="analyze()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2.5 rounded-lg text-xs border border-zinc-700 transition">
+                分析已吃食物并打卡 ↗
             </button>
         </div>
 
-        <!-- 最新分析结果 -->
-        <div id="result" class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm leading-relaxed min-h-[100px] text-zinc-300 whitespace-pre-wrap">
-            等待提交分析...
+        <!-- 最新分析结果 / 推荐食谱 -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-2">
+            <h3 class="text-xs font-bold text-zinc-400 flex items-center gap-1">
+                <span>🤖 AI 智能响应反馈</span>
+            </h3>
+            <div id="result" class="text-sm leading-relaxed min-h-[80px] text-zinc-300 whitespace-pre-wrap font-sans">
+                点击上方【一键生成推荐菜谱】或提交食物进行打卡...
+            </div>
         </div>
 
         <!-- 本地历史日志流 -->
@@ -245,7 +260,7 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     let width = img.width, height = img.height;
-                    const maxDim = 600; // 适当缩小尺寸以适应 localStorage
+                    const maxDim = 600;
                     if (width > maxDim || height > maxDim) {
                         if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
                         else { width = Math.round((width * maxDim) / height); height = maxDim; }
@@ -253,7 +268,7 @@
                     canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    currentBase64Image = canvas.toDataURL('image/jpeg', 0.4); // 降低体积至 20-30KB
+                    currentBase64Image = canvas.toDataURL('image/jpeg', 0.4);
                     if (previewImg) previewImg.src = currentBase64Image;
                     if (nameLabel) nameLabel.innerText = file.name || '粘贴图片';
                 };
@@ -273,7 +288,7 @@
                 openSurveyModal();
             } else {
                 const profile = JSON.parse(profileRaw);
-                updateProfileUI(profile, 0);
+                updateProfileUI(profile);
             }
         }
 
@@ -291,10 +306,10 @@
             const profile = { fatigue, mode, feeling, updatedAt: Date.now() };
             localStorage.setItem('user_plan_profile', JSON.stringify(profile));
             document.getElementById('surveyModal').classList.add('hidden');
-            updateProfileUI(profile, 0);
+            updateProfileUI(profile);
         }
 
-        function updateProfileUI(profile, daysPassed) {
+        function updateProfileUI(profile) {
             const modeNames = { 'strict': '严格高效 ⚡', 'comfortable': '舒适可持续 🥗', 'relax': '心理保护/放纵 🛡️' };
             document.getElementById('planLabel').innerText = modeNames[profile.mode] || profile.mode;
             document.getElementById('fatigueLabel').innerText = profile.fatigue + '/5';
@@ -305,21 +320,26 @@
             return `logs_${d.getFullYear()}_${d.getMonth()+1}_${d.getDate()}`;
         }
 
-        function renderLogs() {
+        function getTodayTotals() {
             const logs = JSON.parse(localStorage.getItem(getTodayKey()) || '[]');
-            const container = document.getElementById('logsContainer');
-            
             let tCal = 0, tPro = 0, tCarb = 0, tFat = 0;
+            logs.forEach(log => {
+                tCal += log.calories || 0;
+                tPro += log.protein || 0;
+                tCarb += log.carbs || 0;
+                tFat += log.fat || 0;
+            });
+            return { tCal, tPro, tCarb, tFat, logs };
+        }
+
+        function renderLogs() {
+            const { tCal, tPro, tCarb, tFat, logs } = getTodayTotals();
+            const container = document.getElementById('logsContainer');
 
             if (logs.length === 0) {
                 container.innerHTML = `<p class="text-zinc-600 text-center py-4">暂无打卡记录</p>`;
             } else {
                 container.innerHTML = logs.map((log, index) => {
-                    tCal += log.calories || 0;
-                    tPro += log.protein || 0;
-                    tCarb += log.carbs || 0;
-                    tFat += log.fat || 0;
-
                     return `
                         <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 flex justify-between items-center gap-3">
                             ${log.image ? `<img src="${log.image}" class="w-14 h-14 object-cover rounded-lg border border-zinc-800 flex-shrink-0" alt="Food">` : ''}
@@ -347,7 +367,6 @@
         function deleteLog(index) {
             const key = getTodayKey();
             let logs = JSON.parse(localStorage.getItem(key) || '[]');
-            // 反转后的 index 需换算回原数组位置
             const realIndex = logs.length - 1 - index;
             logs.splice(realIndex, 1);
             localStorage.setItem(key, JSON.stringify(logs));
@@ -361,20 +380,69 @@
             }
         }
 
+        // 核心一键生成推荐食谱
+        async function generateRecipe() {
+            const resBox = document.getElementById('result');
+            const apiKey = localStorage.getItem('doubao_key') || '';
+            const profile = JSON.parse(localStorage.getItem('user_plan_profile') || '{"fatigue":1,"mode":"comfortable"}');
+            const { tCal, tPro, tCarb, tFat } = getTodayTotals();
+
+            resBox.innerText = '正在基于 173cm/98kg 硬件基准与今日剩余缺口计算推荐食谱...';
+
+            const promptText = `你是我这个25岁/173cm/98kg大体重减脂极客的专属智囊。
+用户当前硬件参数：身高173cm，体重98kg（大体重减脂期），疲劳度：${profile.fatigue}/5，当前模式：${profile.mode}。
+今日已摄入数据：热量 ${tCal} kcal，蛋白质 ${tPro} g，碳水 ${tCarb} g，脂肪 ${tFat} g。
+
+请直接生成一份最科学、极简可落地的【今日三餐/补救推荐菜谱】，满足以下要求：
+1. 包含：早餐、午餐、晚餐（及必要加餐）。
+2. 每餐列明：推荐菜名、精准分量（克数）、预期蛋白质/碳水/脂肪及热量。
+3. 计算出全天汇总的三营养素比例目标（如 蛋白质:碳水:脂肪 = 4:4:2），并给出极简的烹饪/外卖实操避坑建议。
+4. 格式清晰严谨，禁止输出任何 ```json 代码块。`;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        fatigueScore: profile.fatigue,
+                        planMode: profile.mode,
+                        imageBase64: null,
+                        messages: [{ role: 'user', content: promptText }]
+                    })
+                });
+
+                const rawText = await res.text();
+                let data;
+                try { data = JSON.parse(rawText); } catch(e) { return resBox.innerText = '后端非 JSON 输出：' + rawText; }
+
+                if (data.error) {
+                    resBox.innerText = '❌ 报错拦截：\n' + data.error;
+                    if (data.error.includes('API Key')) openKeyModal();
+                } else {
+                    let reply = data.text || '';
+                    // 彻底清除隐藏代码块
+                    reply = reply.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').trim();
+                    resBox.innerText = reply;
+                }
+            } catch (e) {
+                resBox.innerText = '请求异常：' + e.message;
+            }
+        }
+
+        // 分析打卡
         async function analyze() {
             const input = document.getElementById('userInput').value;
             const resBox = document.getElementById('result');
             const apiKey = localStorage.getItem('doubao_key') || '';
             const profile = JSON.parse(localStorage.getItem('user_plan_profile') || '{"fatigue":1,"mode":"comfortable"}');
-            
-            // 备份当前图片用于保存历史
             const imageToSave = currentBase64Image;
 
             if (!input.trim() && !imageToSave) {
                 return alert('请先输入文字描述或选择/粘贴截图');
             }
 
-            resBox.innerText = 'AI 正在计算计算热量与三大营养素数据...';
+            resBox.innerText = 'AI 正在计算热量与三大营养素数据...';
 
             try {
                 const res = await fetch('/api/chat', {
@@ -387,7 +455,7 @@
                         imageBase64: imageToSave || null,
                         messages: [{ 
                             role: 'user', 
-                            content: `用户状态[模式:${profile.mode}, 疲劳:${profile.fatigue}/5]。评估输入: ${input}\n请严格包含以下JSON数据块供前端解析：\n\`\`\`json\n{"summary":"菜品简述","calories":数值,"protein":数值,"carbs":数值,"fat":数值}\n\`\`\`\n随后给出针对该状态的硬核调整建议。` 
+                            content: `用户状态[173cm/98kg, 模式:${profile.mode}, 疲劳:${profile.fatigue}/5]。评估输入: ${input}\n请严格包含以下JSON数据块供前端解析：\n\`\`\`json\n{"summary":"菜品简述","calories":数值,"protein":数值,"carbs":数值,"fat":数值}\n\`\`\`\n随后给出针对该状态的硬核调整建议（禁止把 JSON 展示给用户）。` 
                         }]
                     })
                 });
@@ -401,30 +469,29 @@
                     if (data.error.includes('API Key')) openKeyModal();
                 } else {
                     const reply = data.text || '';
-                    resBox.innerText = reply;
-
-                    // 解析 JSON 模块并自动记录日志
+                    
+                    // 解析 JSON 模块并记录日志
                     const jsonMatch = reply.match(/```json\n([\s\S]*?)\n```/) || reply.match(/\{[\s\S]*?\}/);
                     if (jsonMatch) {
                         try {
                             const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
                             if (parsed.calories !== undefined) {
-                                // 绑定上传的图片到日志条目中
-                                if (imageToSave) {
-                                    parsed.image = imageToSave;
-                                }
+                                if (imageToSave) parsed.image = imageToSave;
                                 const key = getTodayKey();
                                 const logs = JSON.parse(localStorage.getItem(key) || '[]');
                                 logs.push(parsed);
                                 localStorage.setItem(key, JSON.stringify(logs));
                                 
-                                // 清理输入框与当前预览图片，完成一次打卡
                                 document.getElementById('userInput').value = '';
                                 removeImage();
                                 renderLogs();
                             }
                         } catch(err) { console.log('JSON 解析失败:', err); }
                     }
+
+                    // 彻底清除前端显示的 JSON 代码块，只留纯文本文字
+                    const cleanText = reply.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').trim();
+                    resBox.innerText = cleanText || '打卡成功！营养数据已自动同步至上方看板与今日日志。';
                 }
             } catch (e) {
                 resBox.innerText = '请求异常：' + e.message;
